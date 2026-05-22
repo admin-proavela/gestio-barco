@@ -260,6 +260,30 @@ hr { border: none; border-top: 1px solid var(--vora); margin: 22px 0 16px; }
 .plantilla-accions { display: flex; gap: 8px; margin-top: 10px; }
 .plantilla-accions button { flex: 1; border: 1px solid var(--vora); background: #fff; border-radius: 8px; padding: 7px; font-size: 13px; cursor: pointer; }
 
+/* Tabbar amb 5 pestanyes */
+.tab { font-size: 10.5px; }
+.tab-ic { font-size: 20px; }
+
+/* Guanys */
+.guany-hint { font-size: 15px; font-weight: 700; color: var(--verd); margin: 2px 0 6px; min-height: 18px; }
+.guany-resum {
+  background: var(--blau); color: #fff; border-radius: var(--radi);
+  padding: 18px; text-align: center; margin-bottom: 16px; box-shadow: var(--ombra);
+}
+.guany-resum .gr-etq { font-size: 13px; opacity: .85; }
+.guany-resum .gr-total { font-size: 34px; font-weight: 800; margin: 4px 0; line-height: 1.1; }
+.guany-resum .gr-sub { font-size: 13px; opacity: .9; }
+.mes-card { background: #fff; border-radius: var(--radi); box-shadow: var(--ombra); padding: 14px; margin-bottom: 10px; }
+.mes-cap { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.mes-nom { font-weight: 700; font-size: 16px; }
+.mes-comissio { font-weight: 800; color: var(--verd); font-size: 18px; white-space: nowrap; }
+.mes-facturat { font-size: 13px; color: var(--gris); margin-top: 2px; }
+.mes-llista { margin-top: 10px; border-top: 1px solid var(--vora); padding-top: 8px; }
+.mes-fila { display: flex; justify-content: space-between; font-size: 13px; padding: 3px 0; gap: 10px; }
+.mes-fila .mf-nom { color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mes-fila .mf-dret { color: var(--gris); white-space: nowrap; }
+.mes-fila .mf-dret b { color: var(--verd); }
+
 /* Toast */
 .toast {
   position: fixed;

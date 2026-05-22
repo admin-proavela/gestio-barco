@@ -51,6 +51,18 @@
       <div id="cal-dia" class="cal-dia"></div>
     </section>
 
+    <!-- VISTA: GUANYS -->
+    <section id="view-guanys" class="view">
+      <div class="cal-nav">
+        <button id="guany-prev" class="btn-icon">‹</button>
+        <h2 id="guany-any">—</h2>
+        <button id="guany-next" class="btn-icon">›</button>
+      </div>
+      <div id="guany-resum" class="guany-resum"></div>
+      <div id="guany-mesos"></div>
+      <p id="guany-buit" class="buit" hidden>Encara no hi ha imports.<br>Posa el preu del lloguer a les reserves.</p>
+    </section>
+
     <!-- VISTA: PLANTILLES -->
     <section id="view-plantilles" class="view">
       <p class="ajuda">Respostes ràpides per als clients. Toca per copiar i enganxar a ClickAndBoat, Samboat o WhatsApp.</p>
@@ -71,6 +83,10 @@
       <div class="camp">
         <label for="aj-patro">Patró per defecte</label>
         <input type="text" id="aj-patro" placeholder="Ex: Joan">
+      </div>
+      <div class="camp">
+        <label for="aj-comissio">La teva comissió (%)</label>
+        <input type="number" id="aj-comissio" inputmode="decimal" min="0" step="any" placeholder="10">
       </div>
       <div class="camp">
         <label for="aj-tel-cuina">Telèfon de la cuina (WhatsApp)</label>
@@ -97,6 +113,7 @@
   <nav class="tabbar">
     <button class="tab active" data-view="reserves"><span class="tab-ic">📋</span>Reserves</button>
     <button class="tab" data-view="calendari"><span class="tab-ic">📅</span>Calendari</button>
+    <button class="tab" data-view="guanys"><span class="tab-ic">💰</span>Guanys</button>
     <button class="tab" data-view="plantilles"><span class="tab-ic">💬</span>Plantilles</button>
     <button class="tab" data-view="ajustos"><span class="tab-ic">⚙️</span>Ajustos</button>
   </nav>
@@ -193,6 +210,19 @@
           </div>
         </div>
 
+        <h3>Preus</h3>
+        <div class="camp-fila">
+          <div class="camp">
+            <label for="r-preu-lloguer">Preu lloguer (€)</label>
+            <input type="number" id="r-preu-lloguer" inputmode="decimal" min="0" step="any" placeholder="Ex: 1200">
+          </div>
+          <div class="camp">
+            <label for="r-preu-extres">Extres / catering (€)</label>
+            <input type="number" id="r-preu-extres" inputmode="decimal" min="0" step="any" placeholder="Ex: 160">
+          </div>
+        </div>
+        <p class="guany-hint" id="r-guany-hint"></p>
+
         <h3>Altres</h3>
         <div class="camp">
           <label for="r-estat">Estat</label>
@@ -201,10 +231,6 @@
             <option value="confirmada">Confirmada</option>
             <option value="cancellada">Cancel·lada</option>
           </select>
-        </div>
-        <div class="camp">
-          <label for="r-preu">Preu (opcional)</label>
-          <input type="text" id="r-preu" inputmode="decimal" placeholder="Ex: 450 €">
         </div>
         <div class="camp">
           <label for="r-notes">Notes</label>

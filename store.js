@@ -36,7 +36,8 @@ const Store = (function () {
       restaurant: '',
       patro: '',
       telCuina: '',
-      telPatro: ''
+      telPatro: '',
+      comissio: 10
     },
     reserves: [],
     plantilles: PLANTILLES_DEFECTE

@@ -15,8 +15,11 @@ i generar el **full de servei en PDF** per enviar a la cuina i al patró per Wha
 |----------|-----------|
 | **Reserves** | Apunta cada reserva: client, telèfon, plataforma, dia, durada, persones, patró i catering. Botons per generar el **PDF** i **enviar-lo per WhatsApp**. |
 | **Calendari** | Veus d'un cop d'ull quins dies tens reserves (i si el patró està lliure). |
+| **Guanys** | La teva comissió **mes per mes** (per facturar): suma del lloguer + extres de cada mes i el teu % a sobre. Total de l'any a dalt. Les cancel·lades no compten. |
 | **Plantilles** | Respostes ràpides per copiar i enganxar a ClickAndBoat / Samboat / WhatsApp (benvinguda, oferir catering, confirmació…). |
-| **Ajustos** | Nom del barco, restaurant, patró per defecte i **còpia de seguretat** de les dades. |
+| **Ajustos** | Nom del barco, restaurant, patró per defecte, **% de comissió** i **còpia de seguretat** de les dades. |
+
+> A cada reserva poses el **preu del lloguer** i els **extres / catering** per separat; l'app calcula el teu % sobre el total (lloguer + extres).
 
 ---
 

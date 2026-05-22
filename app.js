@@ -5,11 +5,12 @@
   const $ = sel => document.querySelector(sel);
   const $$ = sel => Array.from(document.querySelectorAll(sel));
 
-  const TITOLS = { reserves: 'Reserves', calendari: 'Calendari', plantilles: 'Plantilles', ajustos: 'Ajustos' };
+  const TITOLS = { reserves: 'Reserves', calendari: 'Calendari', guanys: 'Guanys', plantilles: 'Plantilles', ajustos: 'Ajustos' };
 
   let filtreEstat = 'totes';
   let calData = new Date();      // mes mostrat al calendari
   let calSeleccio = null;        // dia seleccionat (ISO)
+  let guanyAny = new Date().getFullYear();  // any mostrat a Guanys
 
   /* ---------- Utilitats ---------- */
   function toast(msg) {
@@ -26,6 +27,29 @@
   }
 
   function capFirst(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : s; }
+
+  // Converteix un text de preu ("1.200", "160,50", "1200 €") en número
+  function num(v) {
+    if (v === null || v === undefined) return 0;
+    const s = String(v).replace(/[^\d,.-]/g, '').replace(/\.(?=\d{3}(\D|$))/g, '').replace(',', '.');
+    const n = parseFloat(s);
+    return isFinite(n) ? n : 0;
+  }
+
+  function eur(n) {
+    return new Intl.NumberFormat('ca-ES', { style: 'currency', currency: 'EUR', minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(n || 0);
+  }
+
+  // Import total d'una reserva (lloguer + extres), amb compatibilitat amb el camp antic "preu"
+  function importReserva(r) {
+    const lloguer = (r.preuLloguer !== undefined && r.preuLloguer !== '') ? num(r.preuLloguer) : num(r.preu);
+    return lloguer + num(r.preuExtres);
+  }
+
+  function taxaComissio() {
+    const c = num(Store.getSettings().comissio);
+    return c > 0 ? c : 10;
+  }
 
   function dataCurta(iso) {
     if (!iso) return '—';
@@ -48,6 +72,7 @@
     $('#topbar-title').textContent = TITOLS[nom] || '';
     $('#btn-nova').style.visibility = (nom === 'reserves') ? 'visible' : 'hidden';
     if (nom === 'calendari') renderCalendari();
+    if (nom === 'guanys') renderGuanys();
     if (nom === 'plantilles') renderPlantilles();
     if (nom === 'ajustos') carregaAjustos();
   }
@@ -151,11 +176,21 @@
     $('#r-cat-hora').value = r ? (r.cateringHora || '') : '';
     $('#r-cat-aler').value = r ? (r.cateringAler || '') : '';
     $('#r-estat').value = r ? (r.estat || 'pendent') : 'pendent';
-    $('#r-preu').value = r ? (r.preu || '') : '';
+    $('#r-preu-lloguer').value = r ? (r.preuLloguer !== undefined ? r.preuLloguer : (r.preu || '')) : '';
+    $('#r-preu-extres').value = r ? (r.preuExtres || '') : '';
     $('#r-notes').value = r ? (r.notes || '') : '';
     $('#cat-detalls').hidden = !$('#r-cat').checked;
     $('#reserva-elimina').hidden = !r;
+    actualitzaGuanyHint();
     modal.hidden = false;
+  }
+
+  function actualitzaGuanyHint() {
+    const total = num($('#r-preu-lloguer').value) + num($('#r-preu-extres').value);
+    const taxa = taxaComissio();
+    $('#r-guany-hint').textContent = total > 0
+      ? `El teu ${taxa}% de ${eur(total)} = ${eur(total * taxa / 100)}`
+      : '';
   }
 
   function tancaReserva() { modal.hidden = true; }
@@ -163,6 +198,8 @@
   $('#btn-nova').addEventListener('click', () => obreReserva(null));
   $('#reserva-cancel').addEventListener('click', tancaReserva);
   $('#r-cat').addEventListener('change', e => { $('#cat-detalls').hidden = !e.target.checked; });
+  $('#r-preu-lloguer').addEventListener('input', actualitzaGuanyHint);
+  $('#r-preu-extres').addEventListener('input', actualitzaGuanyHint);
 
   $('#reserva-desa').addEventListener('click', () => {
     const nom = $('#r-nom').value.trim();
@@ -189,7 +226,8 @@
       cateringHora: $('#r-cat-hora').value,
       cateringAler: $('#r-cat-aler').value.trim(),
       estat: $('#r-estat').value,
-      preu: $('#r-preu').value.trim(),
+      preuLloguer: $('#r-preu-lloguer').value.trim(),
+      preuExtres: $('#r-preu-extres').value.trim(),
       notes: $('#r-notes').value.trim()
     });
     Store.saveReserva(r);
@@ -341,6 +379,67 @@
   $('#cal-prev').addEventListener('click', () => { calData.setMonth(calData.getMonth() - 1); renderCalendari(); });
   $('#cal-next').addEventListener('click', () => { calData.setMonth(calData.getMonth() + 1); renderCalendari(); });
 
+  /* ---------- Guanys (mes per mes) ---------- */
+  function renderGuanys() {
+    $('#guany-any').textContent = String(guanyAny);
+    const taxa = taxaComissio();
+    const cont = $('#guany-mesos');
+    cont.innerHTML = '';
+
+    // Reserves de l'any, no cancel·lades i amb import
+    const reserves = Store.getReserves().filter(r =>
+      r.estat !== 'cancellada' && r.data && r.data.slice(0, 4) === String(guanyAny) && importReserva(r) > 0);
+    $('#guany-buit').hidden = reserves.length > 0;
+
+    // Agrupar per mes
+    const perMes = {};
+    reserves.forEach(r => {
+      const mes = parseInt(r.data.slice(5, 7), 10) - 1;
+      (perMes[mes] = perMes[mes] || []).push(r);
+    });
+
+    let totalFacturat = 0, totalComissio = 0;
+
+    Object.keys(perMes).map(Number).sort((a, b) => a - b).forEach(mes => {
+      const llista = perMes[mes].sort((a, b) => (a.data || '').localeCompare(b.data || ''));
+      let facturatMes = 0;
+      llista.forEach(r => { facturatMes += importReserva(r); });
+      const comissioMes = facturatMes * taxa / 100;
+      totalFacturat += facturatMes;
+      totalComissio += comissioMes;
+
+      const nomMes = capFirst(new Intl.DateTimeFormat('ca-ES', { month: 'long' }).format(new Date(guanyAny, mes, 1)));
+      const files = llista.map(r => {
+        const imp = importReserva(r);
+        return `<div class="mes-fila">
+          <span class="mf-nom">${esc(r.client || 'Sense nom')} · ${dataCurta(r.data)}</span>
+          <span class="mf-dret">${eur(imp)} → <b>${eur(imp * taxa / 100)}</b></span>
+        </div>`;
+      }).join('');
+
+      const card = document.createElement('div');
+      card.className = 'mes-card';
+      card.innerHTML = `
+        <div class="mes-cap">
+          <div>
+            <div class="mes-nom">${esc(nomMes)}</div>
+            <div class="mes-facturat">Facturat ${eur(facturatMes)} · ${llista.length} ${llista.length === 1 ? 'reserva' : 'reserves'}</div>
+          </div>
+          <div class="mes-comissio">${eur(comissioMes)}</div>
+        </div>
+        <div class="mes-llista">${files}</div>`;
+      cont.appendChild(card);
+    });
+
+    $('#guany-resum').innerHTML = `
+      <div class="gr-etq">El teu ${taxa}% de l'any ${guanyAny}</div>
+      <div class="gr-total">${eur(totalComissio)}</div>
+      <div class="gr-sub">de ${eur(totalFacturat)} facturats</div>`;
+  }
+
+  $('#guany-prev').addEventListener('click', () => { guanyAny--; renderGuanys(); });
+  $('#guany-next').addEventListener('click', () => { guanyAny++; renderGuanys(); });
+
   /* ---------- Plantilles ---------- */
   function renderPlantilles() {
     const cont = $('#llista-plantilles');
@@ -393,6 +492,7 @@
     $('#aj-barco').value = s.barco || '';
     $('#aj-restaurant').value = s.restaurant || '';
     $('#aj-patro').value = s.patro || '';
+    $('#aj-comissio').value = s.comissio != null ? s.comissio : 10;
     $('#aj-tel-cuina').value = s.telCuina || '';
     $('#aj-tel-patro').value = s.telPatro || '';
   }
@@ -402,6 +502,7 @@
       barco: $('#aj-barco').value.trim(),
       restaurant: $('#aj-restaurant').value.trim(),
       patro: $('#aj-patro').value.trim(),
+      comissio: num($('#aj-comissio').value) || 10,
       telCuina: $('#aj-tel-cuina').value.trim(),
       telPatro: $('#aj-tel-patro').value.trim()
     });
