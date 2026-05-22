@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#0a6e8a">
+  <title>Gestió Barco</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+</head>
+<body>
+
+  <!-- Capçalera -->
+  <header class="topbar">
+    <h1 id="topbar-title">Reserves</h1>
+    <button id="btn-nova" class="btn-icon" title="Nova reserva" aria-label="Nova reserva">+</button>
+  </header>
+
+  <!-- Contingut principal -->
+  <main id="main">
+
+    <!-- VISTA: RESERVES -->
+    <section id="view-reserves" class="view active">
+      <div class="toolbar">
+        <input type="search" id="cerca" placeholder="Cerca per nom o telèfon…" autocomplete="off">
+        <div class="filtres" id="filtres-estat">
+          <button class="chip active" data-estat="totes">Totes</button>
+          <button class="chip" data-estat="pendent">Pendents</button>
+          <button class="chip" data-estat="confirmada">Confirmades</button>
+          <button class="chip" data-estat="passada">Passades</button>
+        </div>
+      </div>
+      <div id="llista-reserves" class="llista"></div>
+      <p id="buit-reserves" class="buit" hidden>Encara no tens cap reserva.<br>Toca <strong>+</strong> per crear-ne una.</p>
+    </section>
+
+    <!-- VISTA: CALENDARI -->
+    <section id="view-calendari" class="view">
+      <div class="cal-nav">
+        <button id="cal-prev" class="btn-icon">‹</button>
+        <h2 id="cal-titol">—</h2>
+        <button id="cal-next" class="btn-icon">›</button>
+      </div>
+      <div class="cal-setmana">
+        <span>Dl</span><span>Dt</span><span>Dc</span><span>Dj</span><span>Dv</span><span>Ds</span><span>Dg</span>
+      </div>
+      <div id="cal-graella" class="cal-graella"></div>
+      <div id="cal-dia" class="cal-dia"></div>
+    </section>
+
+    <!-- VISTA: PLANTILLES -->
+    <section id="view-plantilles" class="view">
+      <p class="ajuda">Respostes ràpides per als clients. Toca per copiar i enganxar a ClickAndBoat, Samboat o WhatsApp.</p>
+      <div id="llista-plantilles" class="llista"></div>
+      <button id="btn-nova-plantilla" class="btn-secundari ample">+ Nova plantilla</button>
+    </section>
+
+    <!-- VISTA: AJUSTOS -->
+    <section id="view-ajustos" class="view">
+      <div class="camp">
+        <label for="aj-barco">Nom del barco / empresa</label>
+        <input type="text" id="aj-barco" placeholder="Ex: Barco Maria">
+      </div>
+      <div class="camp">
+        <label for="aj-restaurant">Nom del restaurant</label>
+        <input type="text" id="aj-restaurant" placeholder="Ex: Restaurant del port">
+      </div>
+      <div class="camp">
+        <label for="aj-patro">Patró per defecte</label>
+        <input type="text" id="aj-patro" placeholder="Ex: Joan">
+      </div>
+      <div class="camp">
+        <label for="aj-tel-cuina">Telèfon de la cuina (WhatsApp)</label>
+        <input type="tel" id="aj-tel-cuina" placeholder="Ex: 600112233">
+      </div>
+      <div class="camp">
+        <label for="aj-tel-patro">Telèfon del patró (WhatsApp)</label>
+        <input type="tel" id="aj-tel-patro" placeholder="Ex: 600445566">
+      </div>
+      <button id="btn-desa-ajustos" class="btn-primari ample">Desa els ajustos</button>
+
+      <hr>
+      <h3>Còpia de seguretat</h3>
+      <p class="ajuda">Les dades es guarden només al teu mòbil. Fes una còpia de tant en tant per no perdre-les.</p>
+      <button id="btn-export" class="btn-secundari ample">⤓ Descarregar còpia</button>
+      <label for="file-import" class="btn-secundari ample" style="text-align:center;cursor:pointer">⤒ Restaurar còpia</label>
+      <input type="file" id="file-import" accept="application/json" hidden>
+      <p class="versio">Gestió Barco · dades 100% al teu dispositiu</p>
+    </section>
+
+  </main>
+
+  <!-- Navegació inferior -->
+  <nav class="tabbar">
+    <button class="tab active" data-view="reserves"><span class="tab-ic">📋</span>Reserves</button>
+    <button class="tab" data-view="calendari"><span class="tab-ic">📅</span>Calendari</button>
+    <button class="tab" data-view="plantilles"><span class="tab-ic">💬</span>Plantilles</button>
+    <button class="tab" data-view="ajustos"><span class="tab-ic">⚙️</span>Ajustos</button>
+  </nav>
+
+  <!-- Full modal: formulari de reserva -->
+  <div id="modal-reserva" class="modal" hidden>
+    <div class="modal-cont">
+      <div class="modal-cap">
+        <button id="reserva-cancel" class="btn-text">Cancel·la</button>
+        <h2 id="reserva-titol">Nova reserva</h2>
+        <button id="reserva-desa" class="btn-text fort">Desa</button>
+      </div>
+      <form id="form-reserva" class="modal-cos">
+        <input type="hidden" id="r-id">
+
+        <h3>Client</h3>
+        <div class="camp">
+          <label for="r-nom">Nom del client *</label>
+          <input type="text" id="r-nom" required>
+        </div>
+        <div class="camp">
+          <label for="r-tel">Telèfon</label>
+          <input type="tel" id="r-tel" inputmode="tel">
+        </div>
+        <div class="camp">
+          <label for="r-plataforma">Plataforma</label>
+          <select id="r-plataforma">
+            <option>ClickAndBoat</option>
+            <option>Samboat</option>
+            <option>Directe</option>
+            <option>Altre</option>
+          </select>
+        </div>
+
+        <h3>Sortida</h3>
+        <div class="camp-fila">
+          <div class="camp">
+            <label for="r-data">Data *</label>
+            <input type="date" id="r-data" required>
+          </div>
+          <div class="camp">
+            <label for="r-hora">Hora</label>
+            <input type="time" id="r-hora">
+          </div>
+        </div>
+        <div class="camp-fila">
+          <div class="camp">
+            <label for="r-durada">Durada</label>
+            <select id="r-durada">
+              <option>Mig dia (matí)</option>
+              <option>Mig dia (tarda)</option>
+              <option>Dia sencer</option>
+              <option>2 hores</option>
+              <option>3 hores</option>
+              <option>4 hores</option>
+              <option>Altre</option>
+            </select>
+          </div>
+          <div class="camp">
+            <label for="r-persones">Persones</label>
+            <input type="number" id="r-persones" min="1" inputmode="numeric">
+          </div>
+        </div>
+        <div class="camp">
+          <label for="r-patro">Patró</label>
+          <input type="text" id="r-patro">
+        </div>
+        <label class="check">
+          <input type="checkbox" id="r-patro-ok"> Patró confirmat
+        </label>
+
+        <h3>Catering</h3>
+        <label class="check destacat">
+          <input type="checkbox" id="r-cat"> Porten menjar a bord
+        </label>
+        <div id="cat-detalls" hidden>
+          <div class="camp">
+            <label for="r-cat-menu">Menú / què porten</label>
+            <input type="text" id="r-cat-menu" placeholder="Ex: Paella x6, amanida">
+          </div>
+          <div class="camp-fila">
+            <div class="camp">
+              <label for="r-cat-num">Nº de menús</label>
+              <input type="number" id="r-cat-num" min="1" inputmode="numeric">
+            </div>
+            <div class="camp">
+              <label for="r-cat-hora">Hora del menjar</label>
+              <input type="time" id="r-cat-hora">
+            </div>
+          </div>
+          <div class="camp">
+            <label for="r-cat-aler">Al·lèrgies / notes per cuina</label>
+            <input type="text" id="r-cat-aler" placeholder="Ex: 1 celíac, sense marisc">
+          </div>
+        </div>
+
+        <h3>Altres</h3>
+        <div class="camp">
+          <label for="r-estat">Estat</label>
+          <select id="r-estat">
+            <option value="pendent">Pendent</option>
+            <option value="confirmada">Confirmada</option>
+            <option value="cancellada">Cancel·lada</option>
+          </select>
+        </div>
+        <div class="camp">
+          <label for="r-preu">Preu (opcional)</label>
+          <input type="text" id="r-preu" inputmode="decimal" placeholder="Ex: 450 €">
+        </div>
+        <div class="camp">
+          <label for="r-notes">Notes</label>
+          <textarea id="r-notes" rows="3"></textarea>
+        </div>
+
+        <button type="button" id="reserva-elimina" class="btn-perill ample" hidden>Elimina la reserva</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="toast" hidden></div>
+
+  <script src="vendor/jspdf.umd.min.js"></script>
+  <script src="store.js"></script>
+  <script src="pdf.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

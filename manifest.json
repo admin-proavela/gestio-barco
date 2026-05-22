@@ -1,0 +1,15 @@
+{
+  "name": "Gestió Barco",
+  "short_name": "Barco",
+  "description": "Reserves, catering, calendari i full de servei per WhatsApp",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0a6e8a",
+  "theme_color": "#0a6e8a",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" },
+    { "src": "icon.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}
