@@ -78,35 +78,43 @@
     cont.innerHTML = '';
     $('#buit-reserves').hidden = llista.length > 0;
 
-    llista.forEach(r => {
-      const card = document.createElement('div');
-      card.className = 'targeta ' + classeEstat(r);
+    llista.forEach(r => cont.appendChild(crearTargeta(r, dataCurta(r.data))));
+  }
 
-      const info = [];
-      if (r.durada) info.push(r.durada);
-      if (r.hora) info.push('🕐 ' + r.hora);
-      if (r.persones) info.push('👥 ' + r.persones);
-      if (r.patro) info.push((r.patroOk ? '✅ ' : '⏳ ') + r.patro);
-      if (r.plataforma) info.push(r.plataforma);
+  // Construeix una targeta de reserva (reutilitzada a la llista i al calendari)
+  function crearTargeta(r, dataLabel) {
+    const card = document.createElement('div');
+    card.className = 'targeta ' + classeEstat(r);
 
-      card.innerHTML = `
-        <div class="t-cap">
-          <span class="t-nom">${esc(r.client || 'Sense nom')}</span>
-          <span class="t-data">${dataCurta(r.data)}</span>
-        </div>
-        <div class="t-info">${info.map(i => `<span>${esc(i)}</span>`).join('')}</div>
-        <span class="t-badge ${r.catering ? 'cat-si' : 'cat-no'}">${r.catering ? '🍽️ Catering' : 'Sense catering'}</span>
-        <div class="t-accions">
-          <button data-act="edita">✏️ Editar</button>
-          <button class="pdf" data-act="pdf">📄 PDF</button>
-          <button class="wa" data-act="wa">Enviar PDF</button>
-        </div>`;
+    const info = [];
+    if (r.durada) info.push(r.durada);
+    if (r.hora) info.push('🕐 ' + r.hora);
+    if (r.persones) info.push('👥 ' + r.persones);
+    if (r.telefon) info.push('📞 ' + r.telefon);
+    if (r.patro) info.push((r.patroOk ? '✅ ' : '⏳ ') + r.patro);
+    if (r.plataforma) info.push(r.plataforma);
 
-      card.querySelector('[data-act="edita"]').onclick = () => obreReserva(r.id);
-      card.querySelector('[data-act="pdf"]').onclick = () => descarregaPDF(r);
-      card.querySelector('[data-act="wa"]').onclick = () => comparteixWhatsApp(r);
-      cont.appendChild(card);
-    });
+    const cateringTxt = r.catering
+      ? '🍽️ ' + (r.cateringMenu ? esc(r.cateringMenu) : 'Catering')
+      : 'Sense catering';
+
+    card.innerHTML = `
+      <div class="t-cap">
+        <span class="t-nom">${esc(r.client || 'Sense nom')}</span>
+        <span class="t-data">${esc(dataLabel)}</span>
+      </div>
+      <div class="t-info">${info.map(i => `<span>${esc(i)}</span>`).join('')}</div>
+      <span class="t-badge ${r.catering ? 'cat-si' : 'cat-no'}">${cateringTxt}</span>
+      <div class="t-accions">
+        <button data-act="edita">✏️ Editar</button>
+        <button class="pdf" data-act="pdf">📄 PDF</button>
+        <button class="wa" data-act="wa">Enviar PDF</button>
+      </div>`;
+
+    card.querySelector('[data-act="edita"]').onclick = () => obreReserva(r.id);
+    card.querySelector('[data-act="pdf"]').onclick = () => descarregaPDF(r);
+    card.querySelector('[data-act="wa"]').onclick = () => comparteixWhatsApp(r);
+    return card;
   }
 
   function esc(s) {
@@ -302,28 +310,32 @@
 
   function mostraDiaCal(iso) {
     const cont = $('#cal-dia');
+    cont.innerHTML = '';
     const res = Store.getReserves().filter(r => r.data === iso)
       .sort((a, b) => (a.hora || '').localeCompare(b.hora || ''));
     const titol = capFirst(new Intl.DateTimeFormat('ca-ES', { weekday: 'long', day: 'numeric', month: 'long' }).format(new Date(iso + 'T00:00:00')));
-    let html = `<h3>${esc(titol)}</h3>`;
+
+    const h = document.createElement('h3');
+    h.textContent = titol;
+    cont.appendChild(h);
+
     if (!res.length) {
-      html += `<p class="ajuda">Cap reserva aquest dia.</p>
-        <button class="btn-secundari ample" id="cal-afegeix">+ Nova reserva aquest dia</button>`;
+      const p = document.createElement('p');
+      p.className = 'ajuda';
+      p.textContent = 'Cap reserva aquest dia.';
+      cont.appendChild(p);
     } else {
-      html += '<div class="llista">';
-      res.forEach(r => {
-        html += `<div class="targeta ${classeEstat(r)}" data-id="${r.id}" style="cursor:pointer">
-          <div class="t-cap"><span class="t-nom">${esc(r.client || 'Sense nom')}</span>
-          <span class="t-data">${r.hora || ''}</span></div>
-          <div class="t-info"><span>${esc(r.durada || '')}</span>${r.catering ? '<span>🍽️ Catering</span>' : ''}</div>
-        </div>`;
-      });
-      html += '</div><button class="btn-secundari ample" id="cal-afegeix">+ Nova reserva aquest dia</button>';
+      const llista = document.createElement('div');
+      llista.className = 'llista';
+      res.forEach(r => llista.appendChild(crearTargeta(r, r.hora || '')));
+      cont.appendChild(llista);
     }
-    cont.innerHTML = html;
-    $('#cal-afegeix').onclick = () => obreReserva(null);
-    cont.querySelectorAll('.targeta[data-id]').forEach(t =>
-      t.onclick = () => obreReserva(t.dataset.id));
+
+    const btn = document.createElement('button');
+    btn.className = 'btn-secundari ample';
+    btn.textContent = '+ Nova reserva aquest dia';
+    btn.onclick = () => obreReserva(null);
+    cont.appendChild(btn);
   }
 
   $('#cal-prev').addEventListener('click', () => { calData.setMonth(calData.getMonth() - 1); renderCalendari(); });
