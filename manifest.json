@@ -1,6 +1,7 @@
 {
+  "lang": "ca",
   "name": "Gestió Barco",
-  "short_name": "Barco",
+  "short_name": "Gestió Barco",
   "description": "Reserves, catering, calendari i full de servei per WhatsApp",
   "start_url": "./index.html",
   "scope": "./",
