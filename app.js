@@ -236,6 +236,9 @@
     toast('Reserva desada ✅');
   });
 
+  // El botó "Desa la reserva" gran de baix fa el mateix que la "Desa" de dalt
+  $('#btn-desa-baix').addEventListener('click', () => $('#reserva-desa').click());
+
   $('#reserva-elimina').addEventListener('click', () => {
     const id = $('#r-id').value;
     if (!id) return;
