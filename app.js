@@ -453,24 +453,38 @@
       (perMes[mes] = perMes[mes] || []).push(r);
     });
 
-    let totalFacturat = 0, totalComissio = 0;
+    let totalFactConf = 0, totalComConf = 0;
+    let totalFactPend = 0, totalComPend = 0;
 
     Object.keys(perMes).map(Number).sort((a, b) => a - b).forEach(mes => {
       const llista = perMes[mes].sort((a, b) => (a.data || '').localeCompare(b.data || ''));
-      let facturatMes = 0;
-      llista.forEach(r => { facturatMes += importReserva(r); });
-      const comissioMes = facturatMes * taxa / 100;
-      totalFacturat += facturatMes;
-      totalComissio += comissioMes;
+      let factConfMes = 0, factPendMes = 0;
+      llista.forEach(r => {
+        if (r.estat === 'pendent') factPendMes += importReserva(r);
+        else factConfMes += importReserva(r);
+      });
+      const comConfMes = factConfMes * taxa / 100;
+      const comPendMes = factPendMes * taxa / 100;
+      totalFactConf += factConfMes; totalComConf += comConfMes;
+      totalFactPend += factPendMes; totalComPend += comPendMes;
 
       const nomMes = capFirst(new Intl.DateTimeFormat('ca-ES', { month: 'long' }).format(new Date(guanyAny, mes, 1)));
       const files = llista.map(r => {
         const imp = importReserva(r);
-        return `<div class="mes-fila">
-          <span class="mf-nom">${esc(r.client || 'Sense nom')} · ${dataCurta(r.data)}</span>
+        const pend = r.estat === 'pendent';
+        return `<div class="mes-fila ${pend ? 'pendent' : ''}">
+          <span class="mf-nom">${esc(r.client || 'Sense nom')} · ${dataCurta(r.data)}${pend ? ' <span class="mf-chip">pendent</span>' : ''}</span>
           <span class="mf-dret">${eur(imp)} → <b>${eur(imp * taxa / 100)}</b></span>
         </div>`;
       }).join('');
+
+      const facturatTxt = factPendMes > 0
+        ? `Facturat ${eur(factConfMes)}${factPendMes > 0 ? ' <span class="mes-pend">+ ' + eur(factPendMes) + ' pendents</span>' : ''} · ${llista.length} ${llista.length === 1 ? 'reserva' : 'reserves'}`
+        : `Facturat ${eur(factConfMes)} · ${llista.length} ${llista.length === 1 ? 'reserva' : 'reserves'}`;
+
+      const comissioTxt = factPendMes > 0
+        ? `<div class="mes-comissio">${eur(comConfMes)}</div><div class="mes-comissio-pend">+ ${eur(comPendMes)} pendents</div>`
+        : `<div class="mes-comissio">${eur(comConfMes)}</div>`;
 
       const card = document.createElement('div');
       card.className = 'mes-card';
@@ -478,18 +492,22 @@
         <div class="mes-cap">
           <div>
             <div class="mes-nom">${esc(nomMes)}</div>
-            <div class="mes-facturat">Facturat ${eur(facturatMes)} · ${llista.length} ${llista.length === 1 ? 'reserva' : 'reserves'}</div>
+            <div class="mes-facturat">${facturatTxt}</div>
           </div>
-          <div class="mes-comissio">${eur(comissioMes)}</div>
+          <div class="mes-comissio-cont">${comissioTxt}</div>
         </div>
         <div class="mes-llista">${files}</div>`;
       cont.appendChild(card);
     });
 
+    const subPend = totalComPend > 0
+      ? `<div class="gr-pend">+ ${eur(totalComPend)} pendents de confirmar</div>`
+      : '';
     $('#guany-resum').innerHTML = `
-      <div class="gr-etq">El teu ${taxa}% de l'any ${guanyAny}</div>
-      <div class="gr-total">${eur(totalComissio)}</div>
-      <div class="gr-sub">de ${eur(totalFacturat)} facturats</div>`;
+      <div class="gr-etq">El teu ${taxa}% confirmat de ${guanyAny}</div>
+      <div class="gr-total">${eur(totalComConf)}</div>
+      <div class="gr-sub">de ${eur(totalFactConf)} facturats</div>
+      ${subPend}`;
   }
 
   $('#guany-prev').addEventListener('click', () => { guanyAny--; renderGuanys(); });

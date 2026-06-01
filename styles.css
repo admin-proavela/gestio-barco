@@ -295,13 +295,29 @@ hr { border: none; border-top: 1px solid var(--vora); margin: 22px 0 16px; }
 .mes-card { background: #fff; border-radius: var(--radi); box-shadow: var(--ombra); padding: 14px; margin-bottom: 10px; }
 .mes-cap { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
 .mes-nom { font-weight: 700; font-size: 16px; }
+.mes-comissio-cont { text-align: right; }
 .mes-comissio { font-weight: 800; color: var(--verd); font-size: 18px; white-space: nowrap; }
+.mes-comissio-pend { font-weight: 700; color: var(--groc); font-size: 13px; white-space: nowrap; margin-top: 2px; }
 .mes-facturat { font-size: 13px; color: var(--gris); margin-top: 2px; }
+.mes-facturat .mes-pend { color: var(--groc); font-weight: 600; }
 .mes-llista { margin-top: 10px; border-top: 1px solid var(--vora); padding-top: 8px; }
-.mes-fila { display: flex; justify-content: space-between; font-size: 13px; padding: 3px 0; gap: 10px; }
-.mes-fila .mf-nom { color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mes-fila { display: flex; justify-content: space-between; font-size: 13px; padding: 3px 0; gap: 10px; align-items: center; }
+.mes-fila .mf-nom { color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: flex; align-items: center; gap: 6px; }
 .mes-fila .mf-dret { color: var(--gris); white-space: nowrap; }
 .mes-fila .mf-dret b { color: var(--verd); }
+.mes-fila.pendent .mf-dret b { color: var(--groc); }
+.mes-fila .mf-chip {
+  display: inline-block;
+  background: #fff4d6; color: #8a6300;
+  font-size: 11px; font-weight: 700;
+  padding: 1px 7px; border-radius: 999px;
+  text-transform: uppercase; letter-spacing: .3px;
+}
+.gr-pend {
+  margin-top: 10px; padding-top: 10px;
+  border-top: 1px solid rgba(255,255,255,.25);
+  font-size: 13px; opacity: .95;
+}
 
 /* Toast */
 .toast {
