@@ -240,7 +240,14 @@ hr { border: none; border-top: 1px solid var(--vora); margin: 22px 0 16px; }
 .cal-cel.buida { background: transparent; cursor: default; }
 .cal-cel.avui { border-color: var(--blau); font-weight: 700; }
 .cal-cel.te-reserva { background: var(--blau-clar); color: var(--blau-fosc); font-weight: 600; }
+.cal-cel.bloquejat {
+  background: repeating-linear-gradient(45deg, #ffe2e0, #ffe2e0 4px, #ffd0cd 4px, #ffd0cd 8px);
+  color: var(--vermell);
+  font-weight: 700;
+}
+.cal-cel.bloquejat.te-reserva { color: var(--vermell); }
 .cal-cel.seleccionada { background: var(--blau); color: #fff; }
+.cal-cel.seleccionada.bloquejat { background: var(--vermell); color: #fff; }
 .cal-punts { display: flex; gap: 2px; margin-top: 2px; }
 .cal-punt { width: 5px; height: 5px; border-radius: 50%; background: var(--verd); }
 .cal-punt.pendent { background: var(--groc); }
@@ -248,6 +255,18 @@ hr { border: none; border-top: 1px solid var(--vora); margin: 22px 0 16px; }
 
 .cal-dia { margin-top: 16px; }
 .cal-dia h3 { font-size: 15px; margin-bottom: 8px; }
+.dia-bloquejat {
+  background: #ffe2e0; color: var(--vermell);
+  padding: 10px 12px; border-radius: 10px;
+  font-size: 14px; margin-bottom: 10px;
+  border: 1px solid #f5b7b4;
+}
+.avis-bloqueig {
+  background: #ffe2e0; color: var(--vermell);
+  padding: 10px 12px; border-radius: 10px;
+  font-size: 14px; margin: -4px 0 14px;
+  border: 1px solid #f5b7b4; font-weight: 600;
+}
 
 /* Plantilles */
 .plantilla {

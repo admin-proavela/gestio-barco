@@ -182,6 +182,7 @@
     $('#cat-detalls').hidden = !$('#r-cat').checked;
     $('#reserva-elimina').hidden = !r;
     actualitzaGuanyHint();
+    actualitzaAvisBloqueig();
     modal.hidden = false;
   }
 
@@ -238,6 +239,22 @@
 
   // El botó "Desa la reserva" gran de baix fa el mateix que la "Desa" de dalt
   $('#btn-desa-baix').addEventListener('click', () => $('#reserva-desa').click());
+  // El botó "Sortir sense desar" tanca el formulari (igual que "Cancel·la" de dalt)
+  $('#btn-sortir-baix').addEventListener('click', tancaReserva);
+
+  // Mostra avís si la data triada està bloquejada
+  function actualitzaAvisBloqueig() {
+    const iso = $('#r-data').value;
+    const av = $('#r-avis-bloqueig');
+    const b = iso ? Store.getBloqueig(iso) : null;
+    if (b) {
+      av.textContent = '🚫 Atenció: aquest dia està bloquejat' + (b.motiu ? ' (' + b.motiu + ')' : '');
+      av.hidden = false;
+    } else {
+      av.hidden = true;
+    }
+  }
+  $('#r-data').addEventListener('change', actualitzaAvisBloqueig);
 
   $('#reserva-elimina').addEventListener('click', () => {
     const id = $('#r-id').value;
@@ -321,6 +338,10 @@
       (perDia[r.data] = perDia[r.data] || []).push(r);
     });
 
+    // index dies bloquejats
+    const blocPerDia = {};
+    Store.getBloquejats().forEach(b => { blocPerDia[b.data] = b; });
+
     const graella = $('#cal-graella');
     graella.innerHTML = '';
     for (let i = 0; i < inici; i++) {
@@ -342,6 +363,7 @@
           res.slice(0, 3).map(r => `<span class="cal-punt ${r.estat === 'pendent' ? 'pendent' : ''}"></span>`).join('') +
           '</div>';
       }
+      if (blocPerDia[iso]) cel.classList.add('bloquejat');
       cel.innerHTML = d + punts;
       cel.onclick = () => { calSeleccio = iso; renderCalendari(); mostraDiaCal(iso); };
       graella.appendChild(cel);
@@ -354,16 +376,24 @@
     cont.innerHTML = '';
     const res = Store.getReserves().filter(r => r.data === iso)
       .sort((a, b) => (a.hora || '').localeCompare(b.hora || ''));
+    const bloq = Store.getBloqueig(iso);
     const titol = capFirst(new Intl.DateTimeFormat('ca-ES', { weekday: 'long', day: 'numeric', month: 'long' }).format(new Date(iso + 'T00:00:00')));
 
     const h = document.createElement('h3');
     h.textContent = titol;
     cont.appendChild(h);
 
+    if (bloq) {
+      const av = document.createElement('div');
+      av.className = 'dia-bloquejat';
+      av.innerHTML = '🚫 <b>Dia bloquejat</b>' + (bloq.motiu ? ' · ' + esc(bloq.motiu) : '');
+      cont.appendChild(av);
+    }
+
     if (!res.length) {
       const p = document.createElement('p');
       p.className = 'ajuda';
-      p.textContent = 'Cap reserva aquest dia.';
+      p.textContent = bloq ? 'Cap reserva aquest dia.' : 'Cap reserva aquest dia.';
       cont.appendChild(p);
     } else {
       const llista = document.createElement('div');
@@ -377,6 +407,28 @@
     btn.textContent = '+ Nova reserva aquest dia';
     btn.onclick = () => obreReserva(null);
     cont.appendChild(btn);
+
+    const btnBloq = document.createElement('button');
+    btnBloq.className = bloq ? 'btn-perill ample' : 'btn-secundari ample';
+    btnBloq.textContent = bloq ? '🔓 Desbloquejar dia' : '🚫 Bloquejar dia';
+    btnBloq.onclick = () => {
+      if (bloq) {
+        if (confirm('Vols desbloquejar aquest dia?')) {
+          Store.deleteBloqueig(iso);
+          toast('Dia desbloquejat');
+          renderCalendari();
+          renderReserves();
+        }
+      } else {
+        const motiu = prompt('Motiu del bloqueig (opcional):', '');
+        if (motiu === null) return;
+        Store.saveBloqueig(iso, motiu);
+        toast('Dia bloquejat 🚫');
+        renderCalendari();
+        renderReserves();
+      }
+    };
+    cont.appendChild(btnBloq);
   }
 
   $('#cal-prev').addEventListener('click', () => { calData.setMonth(calData.getMonth() - 1); renderCalendari(); });

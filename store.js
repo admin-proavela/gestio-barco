@@ -40,7 +40,8 @@ const Store = (function () {
       comissio: 10
     },
     reserves: [],
-    plantilles: PLANTILLES_DEFECTE
+    plantilles: PLANTILLES_DEFECTE,
+    bloquejats: []
   };
 
   function llegir() {
@@ -53,7 +54,8 @@ const Store = (function () {
         settings: Object.assign({}, DEFECTE.settings, dades.settings),
         reserves: Array.isArray(dades.reserves) ? dades.reserves : [],
         plantilles: Array.isArray(dades.plantilles) && dades.plantilles.length
-          ? dades.plantilles : structuredClone(PLANTILLES_DEFECTE)
+          ? dades.plantilles : structuredClone(PLANTILLES_DEFECTE),
+        bloquejats: Array.isArray(dades.bloquejats) ? dades.bloquejats : []
       };
     } catch (e) {
       console.error('Error llegint dades', e);
@@ -110,6 +112,21 @@ const Store = (function () {
       escriure(dades);
     },
 
+    // --- Dies bloquejats ---
+    getBloquejats() { return dades.bloquejats.slice(); },
+    getBloqueig(iso) { return dades.bloquejats.find(b => b.data === iso) || null; },
+    saveBloqueig(iso, motiu) {
+      const i = dades.bloquejats.findIndex(b => b.data === iso);
+      const reg = { data: iso, motiu: (motiu || '').trim() };
+      if (i >= 0) dades.bloquejats[i] = reg; else dades.bloquejats.push(reg);
+      escriure(dades);
+      return reg;
+    },
+    deleteBloqueig(iso) {
+      dades.bloquejats = dades.bloquejats.filter(b => b.data !== iso);
+      escriure(dades);
+    },
+
     // --- Còpia de seguretat ---
     exportar() { return JSON.stringify(dades, null, 2); },
     importar(json) {
@@ -117,7 +134,8 @@ const Store = (function () {
       dades = {
         settings: Object.assign({}, DEFECTE.settings, nou.settings),
         reserves: Array.isArray(nou.reserves) ? nou.reserves : [],
-        plantilles: Array.isArray(nou.plantilles) ? nou.plantilles : structuredClone(PLANTILLES_DEFECTE)
+        plantilles: Array.isArray(nou.plantilles) ? nou.plantilles : structuredClone(PLANTILLES_DEFECTE),
+        bloquejats: Array.isArray(nou.bloquejats) ? nou.bloquejats : []
       };
       escriure(dades);
     }
