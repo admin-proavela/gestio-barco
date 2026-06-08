@@ -7,6 +7,13 @@
 
   const TITOLS = { reserves: 'Reserves', calendari: 'Calendari', guanys: 'Guanys', plantilles: 'Plantilles', ajustos: 'Ajustos' };
 
+  const MENU_CARTA = {
+    'Paella de verdures': 43.5,
+    'Paella de marisc': 47.5,
+    'Paella mixta': 54,
+    'Arròs caldós de marisc amb bogavant': 61,
+  };
+
   let filtreEstat = 'totes';
   let calData = new Date();      // mes mostrat al calendari
   let calSeleccio = null;        // dia seleccionat (ISO)
@@ -201,6 +208,16 @@
   $('#r-cat').addEventListener('change', e => { $('#cat-detalls').hidden = !e.target.checked; });
   $('#r-preu-lloguer').addEventListener('input', actualitzaGuanyHint);
   $('#r-preu-extres').addEventListener('input', actualitzaGuanyHint);
+
+  function actualitzaPreuCatering() {
+    const preu = MENU_CARTA[$('#r-cat-menu').value];
+    if (!preu) return;
+    const quantitat = parseInt($('#r-cat-num').value) || 1;
+    $('#r-preu-extres').value = (preu * quantitat).toFixed(2).replace(/\.00$/, '');
+    actualitzaGuanyHint();
+  }
+  $('#r-cat-menu').addEventListener('change', actualitzaPreuCatering);
+  $('#r-cat-num').addEventListener('input', actualitzaPreuCatering);
 
   $('#reserva-desa').addEventListener('click', () => {
     const nom = $('#r-nom').value.trim();
