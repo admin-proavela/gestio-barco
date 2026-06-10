@@ -169,13 +169,9 @@
     $('#r-patro').value = r ? (r.patro || '') : (Store.getSettings().patro || '');
     $('#r-patro-ok').checked = r ? !!r.patroOk : false;
     $('#r-cat').checked = r ? !!r.catering : false;
-    CATERING_CARTA.paelles.forEach(p => { $('#' + p.camp).value = r ? (r[p.clau] || '') : ''; });
-    $('#r-cat-beg').value = r ? (r.cateringBeg || '') : '';
-    $('#r-cat-beg-qty').value = r ? (r.cateringBegQty || '') : '';
-    $('#cat-beg-qty-wrap').hidden = !$('#r-cat-beg').value;
-    $('#r-cat-pp').value = r ? (r.cateringPP || '') : '';
-    $('#r-cat-pp-qty').value = r ? (r.cateringPPQty || '') : '';
-    $('#cat-pp-qty-wrap').hidden = !$('#r-cat-pp').value;
+    cateringItems().forEach(it => { $('#' + it.camp).value = r ? (r[it.clau] || '') : ''; });
+    $('#r-cat-extra').value = r ? (r.cateringExtra || '') : '';
+    $('#r-cat-extra-preu').value = r ? (r.cateringExtraPreu || '') : '';
     $('#r-cat-hora').value = r ? (r.cateringHora || '') : '';
     $('#r-cat-aler').value = r ? (r.cateringAler || '') : '';
     $('#r-estat').value = r ? (r.estat || 'pendent') : 'pendent';
@@ -206,21 +202,40 @@
   $('#r-preu-lloguer').addEventListener('input', actualitzaGuanyHint);
   $('#r-preu-extres').addEventListener('input', actualitzaGuanyHint);
 
+  // Genera les files de la carta dins del formulari des de CATERING_CARTA
+  function renderCateringCarta() {
+    $('#cat-grups').innerHTML = CATERING_CARTA.map(g => {
+      const files = g.items.map(it => `
+        <div class="cat-fila">
+          <span>${esc(it.nom)} <em>${it.preu} €/${g.unitat[0]}</em></span>
+          <input type="number" id="${it.camp}" min="0" inputmode="numeric" placeholder="0">
+        </div>`).join('');
+      // Després de les paelles, la fila Extra (descripció lliure + preu manual)
+      const extra = g.extra ? `
+        <div class="cat-fila cat-extra">
+          <input type="text" id="r-cat-extra" placeholder="Extra (si algú no vol paella, ex: menú nens)">
+          <input type="number" id="r-cat-extra-preu" min="0" step="any" inputmode="decimal" placeholder="€">
+        </div>` : '';
+      return `<p class="cat-seccio">${g.grup}</p>${files}${extra}`;
+    }).join('');
+  }
+  renderCateringCarta();
+
   // omplePreu=true: recalcula i escriu el camp d'extres (en editar quantitats).
   // omplePreu=false: només mostra el desglossament sense tocar el preu (en obrir).
   function actualitzaPreuCatering(omplePreu = true) {
     const linies = [];
     let total = 0;
-    CATERING_CARTA.paelles.forEach(p => {
-      const qty = parseInt($('#' + p.camp).value) || 0;
-      if (qty) { total += qty * p.preu; linies.push(`${qty}× ${p.nom}`); }
+    cateringItems().forEach(it => {
+      const qty = parseInt($('#' + it.camp).value) || 0;
+      if (qty) { total += qty * it.preu; linies.push(`${qty}× ${it.nom.split(' (')[0]}`); }
     });
-    const beg = $('#r-cat-beg').value;
-    const begQty = parseInt($('#r-cat-beg-qty').value) || 0;
-    if (beg && begQty) { total += CATERING_CARTA.begudes[beg] * begQty; linies.push(`${begQty}× begudes`); }
-    const pp = $('#r-cat-pp').value;
-    const ppQty = parseInt($('#r-cat-pp-qty').value) || 0;
-    if (pp && ppQty) { total += CATERING_CARTA.ppPreus[pp] * ppQty; linies.push(`${ppQty}× pica-pica`); }
+    const extraPreu = num($('#r-cat-extra-preu').value);
+    const extraTxt = $('#r-cat-extra').value.trim();
+    if (extraPreu > 0 || extraTxt) {
+      total += extraPreu;
+      linies.push('Extra' + (extraTxt ? ` (${extraTxt})` : ''));
+    }
 
     if (omplePreu) {
       // El catering omple sempre el camp d'extres (també a 0 si es buida tot)
@@ -231,19 +246,8 @@
       ? `${linies.join(' · ')} = ${eur(total)}`
       : '';
   }
-  CATERING_CARTA.paelles.forEach(p => {
-    $('#' + p.camp).addEventListener('input', () => actualitzaPreuCatering());
-  });
-  $('#r-cat-beg').addEventListener('change', () => {
-    $('#cat-beg-qty-wrap').hidden = !$('#r-cat-beg').value;
-    actualitzaPreuCatering();
-  });
-  $('#r-cat-beg-qty').addEventListener('input', () => actualitzaPreuCatering());
-  $('#r-cat-pp').addEventListener('change', () => {
-    $('#cat-pp-qty-wrap').hidden = !$('#r-cat-pp').value;
-    actualitzaPreuCatering();
-  });
-  $('#r-cat-pp-qty').addEventListener('input', () => actualitzaPreuCatering());
+  // Delegació: qualsevol input dins dels grups de la carta recalcula el preu
+  $('#cat-grups').addEventListener('input', () => actualitzaPreuCatering());
 
   $('#reserva-desa').addEventListener('click', () => {
     const nom = $('#r-nom').value.trim();
@@ -253,9 +257,9 @@
 
     const id = $('#r-id').value;
     const existent = id ? Store.getReserva(id) : null;
-    const cateringPaelles = {};
-    CATERING_CARTA.paelles.forEach(p => { cateringPaelles[p.clau] = parseInt($('#' + p.camp).value) || 0; });
-    const r = Object.assign({}, existent, cateringPaelles, {
+    const cateringQty = {};
+    cateringItems().forEach(it => { cateringQty[it.clau] = parseInt($('#' + it.camp).value) || 0; });
+    const r = Object.assign({}, existent, cateringQty, {
       id: id || undefined,
       client: nom,
       telefon: $('#r-tel').value.trim(),
@@ -267,10 +271,8 @@
       patro: $('#r-patro').value.trim(),
       patroOk: $('#r-patro-ok').checked,
       catering: $('#r-cat').checked,
-      cateringBeg: $('#r-cat-beg').value,
-      cateringBegQty: parseInt($('#r-cat-beg-qty').value) || 0,
-      cateringPP: $('#r-cat-pp').value,
-      cateringPPQty: parseInt($('#r-cat-pp-qty').value) || 0,
+      cateringExtra: $('#r-cat-extra').value.trim(),
+      cateringExtraPreu: $('#r-cat-extra-preu').value.trim(),
       cateringHora: $('#r-cat-hora').value,
       cateringAler: $('#r-cat-aler').value.trim(),
       estat: $('#r-estat').value,
@@ -349,7 +351,7 @@
 
   function resumText(r, settings) {
     const L = [];
-    L.push('*' + (settings.barco || 'Sortida') + ' — Full de servei*');
+    L.push('*' + (settings.barco || 'Hotel Barcarola') + ' — Full de servei*');
     L.push('📅 ' + (r.data ? dataCurta(r.data) : '—') + (r.hora ? '  🕐 ' + r.hora : ''));
     if (r.durada) L.push('⏱️ ' + r.durada);
     L.push('👤 ' + (r.client || '') + (r.telefon ? '  📞 ' + r.telefon : ''));
@@ -357,12 +359,15 @@
     if (r.patro) L.push('⚓ Patró: ' + r.patro + (r.patroOk ? ' (confirmat)' : ''));
     if (r.catering) {
       L.push('🍽️ MENJAR A BORD');
-      CATERING_CARTA.paelles.forEach(p => {
-        const qty = r[p.clau] || 0;
-        if (qty) L.push('   ' + p.nom + ' × ' + qty);
+      CATERING_CARTA.forEach(g => {
+        g.items.forEach(it => {
+          const qty = r[it.clau] || 0;
+          if (qty) L.push('   ' + it.nom + ' × ' + qty + ' ' + (qty === 1 ? g.unitat[0] : g.unitat[1]));
+        });
       });
-      if (r.cateringBeg && r.cateringBegQty) L.push('   🥤 ' + CATERING_CARTA.begNoms[r.cateringBeg] + ' × ' + r.cateringBegQty);
-      if (r.cateringPP && r.cateringPPQty) L.push('   🫒 ' + CATERING_CARTA.ppNoms[r.cateringPP] + ' × ' + r.cateringPPQty);
+      if (r.cateringExtra || num(r.cateringExtraPreu) > 0) {
+        L.push('   Extra: ' + (r.cateringExtra || '—') + (num(r.cateringExtraPreu) > 0 ? ' (' + eur(num(r.cateringExtraPreu)) + ')' : ''));
+      }
       if (r.cateringHora) L.push('   Hora menjar: ' + r.cateringHora);
       if (r.cateringAler) L.push('   ⚠️ ' + r.cateringAler);
     } else {

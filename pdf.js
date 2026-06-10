@@ -36,7 +36,7 @@ const PdfServei = (function () {
     doc.setTextColor(255, 255, 255);
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(18);
-    doc.text((settings.barco || 'Gestió Barco').toUpperCase(), marge, 15);
+    doc.text((settings.barco || 'Hotel Barcarola').toUpperCase(), marge, 15);
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(12);
     doc.text('FULL DE SERVEI', marge, 25);
@@ -133,12 +133,16 @@ const PdfServei = (function () {
 
       // Ítems escollits, cadascun en una línia completa (els noms llargs s'ajusten sols)
       const items = [];
-      CATERING_CARTA.paelles.forEach(p => {
-        const qty = r[p.clau] || 0;
-        if (qty) items.push(`${p.nom}  —  ${qty} ${qty === 1 ? 'ració' : 'racions'}`);
+      CATERING_CARTA.forEach(g => {
+        g.items.forEach(it => {
+          const qty = r[it.clau] || 0;
+          if (qty) items.push(`${it.nom}  —  ${qty} ${qty === 1 ? g.unitat[0] : g.unitat[1]}`);
+        });
       });
-      if (r.cateringBeg && r.cateringBegQty) items.push(`${CATERING_CARTA.begNoms[r.cateringBeg]}  —  ${r.cateringBegQty} pers.`);
-      if (r.cateringPP && r.cateringPPQty) items.push(`${CATERING_CARTA.ppNoms[r.cateringPP]}  —  ${r.cateringPPQty} pers.`);
+      const extraPreu = parseFloat(String(r.cateringExtraPreu).replace(',', '.')) || 0;
+      if (r.cateringExtra || extraPreu > 0) {
+        items.push(`Extra: ${r.cateringExtra || '—'}${extraPreu > 0 ? '  —  ' + extraPreu + ' €' : ''}`);
+      }
       doc.setFontSize(12);
       doc.setFont('helvetica', 'normal');
       items.forEach(it => {

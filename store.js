@@ -1,19 +1,38 @@
 /* store.js — Capa de dades local (localStorage). Res surt del dispositiu. */
 
-/* Carta de catering — compartit entre app.js i pdf.js.
-   'camp' és l'id de l'input al formulari; 'clau' és el camp guardat a la reserva. */
-const CATERING_CARTA = {
-  paelles: [
-    { clau: 'cateringD1', camp: 'r-cat-d1', nom: 'Paella vegetal', preu: 42 },
-    { clau: 'cateringD2', camp: 'r-cat-d2', nom: 'Paella de marisc', preu: 55 },
-    { clau: 'cateringD3', camp: 'r-cat-d3', nom: 'Paella mixta', preu: 60 },
-    { clau: 'cateringD4', camp: 'r-cat-d4', nom: 'Arròs cremós amb bogavant', preu: 67 },
-  ],
-  begudes: { alcohol: 25, 'no-alcohol': 15 },
-  begNoms: { alcohol: 'Amb alcohol (refrescos, vi i cervesa)', 'no-alcohol': 'Sense alcohol (només refrescos)' },
-  ppPreus: { basic: 10, complet: 25 },
-  ppNoms: { basic: 'Pica-pica bàsic (patates, olives, fuet)', complet: 'Pica-pica complet (+ amanida de pasta, entrepans i macedònia)' },
-};
+/* Carta de catering — compartida entre app.js i pdf.js.
+   Cada ítem: 'clau' (camp guardat a la reserva), 'camp' (id de l'input al
+   formulari), 'nom' i 'preu'. 'unitat' = [singular, plural] per als textos. */
+const CATERING_CARTA = [
+  {
+    grup: 'Paelles / arrossos', unitat: ['ració', 'racions'], extra: true,
+    items: [
+      { clau: 'cateringD1', camp: 'r-cat-d1', nom: 'Paella vegetal', preu: 42 },
+      { clau: 'cateringD2', camp: 'r-cat-d2', nom: 'Paella de marisc', preu: 55 },
+      { clau: 'cateringD3', camp: 'r-cat-d3', nom: 'Paella mixta', preu: 60 },
+      { clau: 'cateringD4', camp: 'r-cat-d4', nom: 'Arròs cremós amb bogavant', preu: 67 },
+    ],
+  },
+  {
+    grup: '🥤 Begudes', unitat: ['persona', 'persones'],
+    items: [
+      { clau: 'cateringBegA', camp: 'r-cat-bega', nom: 'Amb alcohol (refrescos, vi i cervesa)', preu: 25 },
+      { clau: 'cateringBegS', camp: 'r-cat-begs', nom: 'Sense alcohol (només refrescos)', preu: 15 },
+    ],
+  },
+  {
+    grup: '🫒 Pica-pica', unitat: ['persona', 'persones'],
+    items: [
+      { clau: 'cateringPPb', camp: 'r-cat-ppb', nom: 'Bàsic (patates, olives, fuet)', preu: 10 },
+      { clau: 'cateringPPc', camp: 'r-cat-ppc', nom: 'Complet (+ amanida de pasta, entrepans i macedònia)', preu: 25 },
+    ],
+  },
+];
+
+// Recorre tots els ítems de la carta (útil per desar/llegir/sumar)
+function cateringItems() {
+  return CATERING_CARTA.flatMap(g => g.items);
+}
 
 const Store = (function () {
   const KEY = 'gestio-barco-v1';
@@ -48,7 +67,7 @@ const Store = (function () {
 
   const DEFECTE = {
     settings: {
-      barco: '',
+      barco: 'Hotel Barcarola',
       restaurant: '',
       patro: '',
       telCuina: '',
