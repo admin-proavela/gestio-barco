@@ -1,4 +1,20 @@
 /* store.js — Capa de dades local (localStorage). Res surt del dispositiu. */
+
+/* Carta de catering — compartit entre app.js i pdf.js.
+   'camp' és l'id de l'input al formulari; 'clau' és el camp guardat a la reserva. */
+const CATERING_CARTA = {
+  paelles: [
+    { clau: 'cateringD1', camp: 'r-cat-d1', nom: 'Paella vegetal', preu: 42 },
+    { clau: 'cateringD2', camp: 'r-cat-d2', nom: 'Paella de marisc', preu: 55 },
+    { clau: 'cateringD3', camp: 'r-cat-d3', nom: 'Paella mixta', preu: 60 },
+    { clau: 'cateringD4', camp: 'r-cat-d4', nom: 'Arròs cremós amb bogavant', preu: 67 },
+  ],
+  begudes: { alcohol: 25, 'no-alcohol': 15 },
+  begNoms: { alcohol: 'Amb alcohol (refrescos, vi i cervesa)', 'no-alcohol': 'Sense alcohol (només refrescos)' },
+  ppPreus: { basic: 10, complet: 25 },
+  ppNoms: { basic: 'Pica-pica bàsic (patates, olives, fuet)', complet: 'Pica-pica complet (+ amanida de pasta, entrepans i macedònia)' },
+};
+
 const Store = (function () {
   const KEY = 'gestio-barco-v1';
 
@@ -11,7 +27,7 @@ const Store = (function () {
     {
       id: 'p-catering',
       titol: 'Oferir catering / dinar a bord',
-      text: 'Una cosa que agrada molt: podem portar dinar a bord des del nostre restaurant 🍽️ T\'ho portem amb una llanxa durant la sortida.\n\nVols que t\'enviï el menú? Em dius quants menús i si hi ha alguna al·lèrgia.'
+      text: 'Oferim catering a bord perquè no t\'hagis de preocupar de res durant la sortida 🍽️ T\'ho portem des del nostre restaurant amb una llanxa.\n\n🥘 Paelles i arrossos (per ració):\n• Paella vegetal — 42 €\n• Paella de marisc — 55 €\n• Paella mixta — 60 €\n• Arròs cremós amb bogavant — 67 €\n\n🥤 Begudes (a bord, lliure):\n• Amb alcohol (refrescos, vi i cervesa) — 25 €/persona\n• Sense alcohol (només refrescos) — 15 €/persona\n\n🫒 Pica-pica:\n• Bàsic (patates, olives, fuet) — 10 €/persona\n• Complet (+ amanida de pasta, entrepans i macedònia) — 25 €/persona\n\nDigues-me què voleu i per quantes persones, i si hi ha alguna al·lèrgia 😊'
     },
     {
       id: 'p-confirmacio',

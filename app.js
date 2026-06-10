@@ -7,13 +7,6 @@
 
   const TITOLS = { reserves: 'Reserves', calendari: 'Calendari', guanys: 'Guanys', plantilles: 'Plantilles', ajustos: 'Ajustos' };
 
-  const MENU_CARTA = {
-    'Paella de verdures': 43.5,
-    'Paella de marisc': 47.5,
-    'Paella mixta': 54,
-    'Arròs caldós de marisc amb bogavant': 61,
-  };
-
   let filtreEstat = 'totes';
   let calData = new Date();      // mes mostrat al calendari
   let calSeleccio = null;        // dia seleccionat (ISO)
@@ -126,9 +119,7 @@
     if (r.patro) info.push((r.patroOk ? '✅ ' : '⏳ ') + r.patro);
     if (r.plataforma) info.push(r.plataforma);
 
-    const cateringTxt = r.catering
-      ? '🍽️ ' + (r.cateringMenu ? esc(r.cateringMenu) : 'Catering')
-      : 'Sense catering';
+    const cateringTxt = r.catering ? '🍽️ Menjar a bord' : 'Sense menjar a bord';
 
     card.innerHTML = `
       <div class="t-cap">
@@ -178,8 +169,13 @@
     $('#r-patro').value = r ? (r.patro || '') : (Store.getSettings().patro || '');
     $('#r-patro-ok').checked = r ? !!r.patroOk : false;
     $('#r-cat').checked = r ? !!r.catering : false;
-    $('#r-cat-menu').value = r ? (r.cateringMenu || '') : '';
-    $('#r-cat-num').value = r ? (r.cateringNum || '') : '';
+    CATERING_CARTA.paelles.forEach(p => { $('#' + p.camp).value = r ? (r[p.clau] || '') : ''; });
+    $('#r-cat-beg').value = r ? (r.cateringBeg || '') : '';
+    $('#r-cat-beg-qty').value = r ? (r.cateringBegQty || '') : '';
+    $('#cat-beg-qty-wrap').hidden = !$('#r-cat-beg').value;
+    $('#r-cat-pp').value = r ? (r.cateringPP || '') : '';
+    $('#r-cat-pp-qty').value = r ? (r.cateringPPQty || '') : '';
+    $('#cat-pp-qty-wrap').hidden = !$('#r-cat-pp').value;
     $('#r-cat-hora').value = r ? (r.cateringHora || '') : '';
     $('#r-cat-aler').value = r ? (r.cateringAler || '') : '';
     $('#r-estat').value = r ? (r.estat || 'pendent') : 'pendent';
@@ -188,6 +184,7 @@
     $('#r-notes').value = r ? (r.notes || '') : '';
     $('#cat-detalls').hidden = !$('#r-cat').checked;
     $('#reserva-elimina').hidden = !r;
+    actualitzaPreuCatering(false);
     actualitzaGuanyHint();
     actualitzaAvisBloqueig();
     modal.hidden = false;
@@ -209,15 +206,44 @@
   $('#r-preu-lloguer').addEventListener('input', actualitzaGuanyHint);
   $('#r-preu-extres').addEventListener('input', actualitzaGuanyHint);
 
-  function actualitzaPreuCatering() {
-    const preu = MENU_CARTA[$('#r-cat-menu').value];
-    if (!preu) return;
-    const quantitat = parseInt($('#r-cat-num').value) || 1;
-    $('#r-preu-extres').value = (preu * quantitat).toFixed(2).replace(/\.00$/, '');
-    actualitzaGuanyHint();
+  // omplePreu=true: recalcula i escriu el camp d'extres (en editar quantitats).
+  // omplePreu=false: només mostra el desglossament sense tocar el preu (en obrir).
+  function actualitzaPreuCatering(omplePreu = true) {
+    const linies = [];
+    let total = 0;
+    CATERING_CARTA.paelles.forEach(p => {
+      const qty = parseInt($('#' + p.camp).value) || 0;
+      if (qty) { total += qty * p.preu; linies.push(`${qty}× ${p.nom}`); }
+    });
+    const beg = $('#r-cat-beg').value;
+    const begQty = parseInt($('#r-cat-beg-qty').value) || 0;
+    if (beg && begQty) { total += CATERING_CARTA.begudes[beg] * begQty; linies.push(`${begQty}× begudes`); }
+    const pp = $('#r-cat-pp').value;
+    const ppQty = parseInt($('#r-cat-pp-qty').value) || 0;
+    if (pp && ppQty) { total += CATERING_CARTA.ppPreus[pp] * ppQty; linies.push(`${ppQty}× pica-pica`); }
+
+    if (omplePreu) {
+      // El catering omple sempre el camp d'extres (també a 0 si es buida tot)
+      $('#r-preu-extres').value = total > 0 ? String(Math.round(total * 100) / 100) : '';
+      actualitzaGuanyHint();
+    }
+    $('#r-cat-total').textContent = total > 0
+      ? `${linies.join(' · ')} = ${eur(total)}`
+      : '';
   }
-  $('#r-cat-menu').addEventListener('change', actualitzaPreuCatering);
-  $('#r-cat-num').addEventListener('input', actualitzaPreuCatering);
+  CATERING_CARTA.paelles.forEach(p => {
+    $('#' + p.camp).addEventListener('input', () => actualitzaPreuCatering());
+  });
+  $('#r-cat-beg').addEventListener('change', () => {
+    $('#cat-beg-qty-wrap').hidden = !$('#r-cat-beg').value;
+    actualitzaPreuCatering();
+  });
+  $('#r-cat-beg-qty').addEventListener('input', () => actualitzaPreuCatering());
+  $('#r-cat-pp').addEventListener('change', () => {
+    $('#cat-pp-qty-wrap').hidden = !$('#r-cat-pp').value;
+    actualitzaPreuCatering();
+  });
+  $('#r-cat-pp-qty').addEventListener('input', () => actualitzaPreuCatering());
 
   $('#reserva-desa').addEventListener('click', () => {
     const nom = $('#r-nom').value.trim();
@@ -227,7 +253,9 @@
 
     const id = $('#r-id').value;
     const existent = id ? Store.getReserva(id) : null;
-    const r = Object.assign({}, existent, {
+    const cateringPaelles = {};
+    CATERING_CARTA.paelles.forEach(p => { cateringPaelles[p.clau] = parseInt($('#' + p.camp).value) || 0; });
+    const r = Object.assign({}, existent, cateringPaelles, {
       id: id || undefined,
       client: nom,
       telefon: $('#r-tel').value.trim(),
@@ -239,8 +267,10 @@
       patro: $('#r-patro').value.trim(),
       patroOk: $('#r-patro-ok').checked,
       catering: $('#r-cat').checked,
-      cateringMenu: $('#r-cat-menu').value.trim(),
-      cateringNum: $('#r-cat-num').value,
+      cateringBeg: $('#r-cat-beg').value,
+      cateringBegQty: parseInt($('#r-cat-beg-qty').value) || 0,
+      cateringPP: $('#r-cat-pp').value,
+      cateringPPQty: parseInt($('#r-cat-pp-qty').value) || 0,
       cateringHora: $('#r-cat-hora').value,
       cateringAler: $('#r-cat-aler').value.trim(),
       estat: $('#r-estat').value,
@@ -326,12 +356,17 @@
     if (r.persones) L.push('👥 ' + r.persones + ' persones');
     if (r.patro) L.push('⚓ Patró: ' + r.patro + (r.patroOk ? ' (confirmat)' : ''));
     if (r.catering) {
-      L.push('🍽️ CATERING: SÍ' + (r.cateringNum ? ' (' + r.cateringNum + ' menús)' : ''));
-      if (r.cateringMenu) L.push('   Menú: ' + r.cateringMenu);
+      L.push('🍽️ MENJAR A BORD');
+      CATERING_CARTA.paelles.forEach(p => {
+        const qty = r[p.clau] || 0;
+        if (qty) L.push('   ' + p.nom + ' × ' + qty);
+      });
+      if (r.cateringBeg && r.cateringBegQty) L.push('   🥤 ' + CATERING_CARTA.begNoms[r.cateringBeg] + ' × ' + r.cateringBegQty);
+      if (r.cateringPP && r.cateringPPQty) L.push('   🫒 ' + CATERING_CARTA.ppNoms[r.cateringPP] + ' × ' + r.cateringPPQty);
       if (r.cateringHora) L.push('   Hora menjar: ' + r.cateringHora);
       if (r.cateringAler) L.push('   ⚠️ ' + r.cateringAler);
     } else {
-      L.push('🍽️ Catering: NO');
+      L.push('🍽️ Sense menjar a bord');
     }
     if (r.notes) L.push('📝 ' + r.notes);
     return L.join('\n');

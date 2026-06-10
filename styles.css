@@ -165,6 +165,16 @@ h1, h2, h3 { margin: 0; }
 .check input { width: 20px; height: 20px; }
 .check.destacat { background: var(--blau-clar); padding: 12px; border-radius: 10px; font-weight: 600; }
 
+/* Catering */
+.cat-seccio { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; color: var(--gris); margin: 16px 0 8px; }
+.cat-seccio-hint { font-weight: 400; text-transform: none; letter-spacing: 0; }
+.cat-fila { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--vora); }
+.cat-fila span { flex: 1; font-size: 15px; }
+.cat-fila em { font-style: normal; font-size: 13px; color: var(--gris); margin-left: 4px; }
+.cat-fila input[type="number"] { width: 70px; min-width: 70px; text-align: center; padding: 8px 6px; border: 1px solid var(--vora); border-radius: 10px; font-size: 16px; background: #fff; }
+.cat-total { margin: 14px 0 4px; padding: 10px 12px; background: var(--blau-clar); color: var(--blau-fosc); border-radius: 10px; font-size: 14px; font-weight: 600; }
+.cat-total:empty { display: none; }
+
 .ajuda { font-size: 14px; color: var(--gris); margin: 0 0 14px; }
 .versio { text-align: center; font-size: 12px; color: var(--gris); margin-top: 24px; }
 hr { border: none; border-top: 1px solid var(--vora); margin: 22px 0 16px; }

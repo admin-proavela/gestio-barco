@@ -124,25 +124,41 @@ const PdfServei = (function () {
     if (r.catering) {
       doc.setFillColor(231, 246, 238);
       doc.setTextColor(31, 158, 107);
-      doc.roundedRect(marge, y - 5, 60, 9, 2, 2, 'F');
+      doc.roundedRect(marge, y - 5, 55, 9, 2, 2, 'F');
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(12);
-      doc.text('SÍ — PORTEN MENJAR', marge + 4, y + 1);
+      doc.text('SÍ — MENJAR A BORD', marge + 4, y + 1);
       y += 12;
       doc.setTextColor(...negre);
+
+      // Ítems escollits, cadascun en una línia completa (els noms llargs s'ajusten sols)
+      const items = [];
+      CATERING_CARTA.paelles.forEach(p => {
+        const qty = r[p.clau] || 0;
+        if (qty) items.push(`${p.nom}  —  ${qty} ${qty === 1 ? 'ració' : 'racions'}`);
+      });
+      if (r.cateringBeg && r.cateringBegQty) items.push(`${CATERING_CARTA.begNoms[r.cateringBeg]}  —  ${r.cateringBegQty} pers.`);
+      if (r.cateringPP && r.cateringPPQty) items.push(`${CATERING_CARTA.ppNoms[r.cateringPP]}  —  ${r.cateringPPQty} pers.`);
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'normal');
+      items.forEach(it => {
+        const txt = doc.splitTextToSize('•  ' + it, W - 2 * marge);
+        doc.text(txt, marge, y);
+        y += 7 * txt.length;
+      });
+
+      // Detalls breus amb etiqueta:valor
       seccioInterna([
-        ['Menú', r.cateringMenu],
-        ['Nº menús', r.cateringNum],
         ['Hora menjar', r.cateringHora],
         ['Al·lèrgies/notes', r.cateringAler]
       ]);
     } else {
       doc.setFillColor(242, 244, 246);
       doc.setTextColor(107, 119, 133);
-      doc.roundedRect(marge, y - 5, 40, 9, 2, 2, 'F');
+      doc.roundedRect(marge, y - 5, 45, 9, 2, 2, 'F');
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(12);
-      doc.text('NO porten menjar', marge + 4, y + 1);
+      doc.text('Sense menjar a bord', marge + 4, y + 1);
       y += 12;
     }
 
