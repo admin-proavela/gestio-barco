@@ -171,6 +171,7 @@
     $('#r-cat').checked = r ? !!r.catering : false;
     cateringItems().forEach(it => { $('#' + it.camp).value = r ? (r[it.clau] || '') : ''; });
     $('#r-cat-extra').value = r ? (r.cateringExtra || '') : '';
+    $('#r-cat-extra-qty').value = r ? (r.cateringExtraQty || '') : '';
     $('#r-cat-extra-preu').value = r ? (r.cateringExtraPreu || '') : '';
     $('#r-cat-hora').value = r ? (r.cateringHora || '') : '';
     $('#r-cat-aler').value = r ? (r.cateringAler || '') : '';
@@ -210,10 +211,11 @@
           <span>${esc(it.nom)} <em>${it.preu} €/${g.unitat[0]}</em></span>
           <input type="number" id="${it.camp}" min="0" inputmode="numeric" placeholder="0">
         </div>`).join('');
-      // Després de les paelles, la fila Extra (descripció lliure + preu manual)
+      // Després de les paelles, la fila Extra (tot manual: descripció + persones + preu)
       const extra = g.extra ? `
         <div class="cat-fila cat-extra">
-          <input type="text" id="r-cat-extra" placeholder="Extra (si algú no vol paella, ex: menú nens)">
+          <input type="text" id="r-cat-extra" placeholder="Extra (ex: menú infantil)">
+          <input type="number" id="r-cat-extra-qty" min="0" inputmode="numeric" placeholder="pers.">
           <input type="number" id="r-cat-extra-preu" min="0" step="any" inputmode="decimal" placeholder="€">
         </div>` : '';
       return `<p class="cat-seccio">${g.grup}</p>${files}${extra}`;
@@ -232,9 +234,10 @@
     });
     const extraPreu = num($('#r-cat-extra-preu').value);
     const extraTxt = $('#r-cat-extra').value.trim();
+    const extraQty = $('#r-cat-extra-qty').value.trim();
     if (extraPreu > 0 || extraTxt) {
       total += extraPreu;
-      linies.push('Extra' + (extraTxt ? ` (${extraTxt})` : ''));
+      linies.push('Extra' + (extraTxt ? ` (${extraTxt}${extraQty ? ` ×${extraQty}` : ''})` : ''));
     }
 
     if (omplePreu) {
@@ -272,6 +275,7 @@
       patroOk: $('#r-patro-ok').checked,
       catering: $('#r-cat').checked,
       cateringExtra: $('#r-cat-extra').value.trim(),
+      cateringExtraQty: $('#r-cat-extra-qty').value.trim(),
       cateringExtraPreu: $('#r-cat-extra-preu').value.trim(),
       cateringHora: $('#r-cat-hora').value,
       cateringAler: $('#r-cat-aler').value.trim(),

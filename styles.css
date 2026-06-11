@@ -174,10 +174,10 @@ h1, h2, h3 { margin: 0; }
 .cat-fila input[type="number"] { width: 70px; min-width: 70px; text-align: center; padding: 8px 6px; border: 1px solid var(--vora); border-radius: 10px; font-size: 16px; background: #fff; }
 .cat-total { margin: 14px 0 4px; padding: 10px 12px; background: var(--blau-clar); color: var(--blau-fosc); border-radius: 10px; font-size: 14px; font-weight: 600; }
 .cat-total:empty { display: none; }
-/* Fila Extra: descripció lliure + preu manual */
-.cat-extra { gap: 8px; }
-.cat-extra input[type="text"] { flex: 1; min-width: 0; padding: 8px 10px; border: 1px solid var(--vora); border-radius: 10px; font-size: 15px; background: #fff; }
-.cat-extra input[type="number"] { width: 70px; min-width: 70px; }
+/* Fila Extra: tot manual (descripció + persones + preu); descripció a la 1a línia */
+.cat-extra { gap: 8px; flex-wrap: wrap; }
+.cat-extra input[type="text"] { flex: 1 1 100%; min-width: 0; padding: 8px 10px; border: 1px solid var(--vora); border-radius: 10px; font-size: 15px; background: #fff; }
+.cat-extra input[type="number"] { flex: 1 1 0; width: auto; min-width: 0; }
 
 .ajuda { font-size: 14px; color: var(--gris); margin: 0 0 14px; }
 .versio { text-align: center; font-size: 12px; color: var(--gris); margin-top: 24px; }

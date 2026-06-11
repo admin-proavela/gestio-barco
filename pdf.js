@@ -12,6 +12,18 @@ const PdfServei = (function () {
     } catch (e) { return iso; }
   }
 
+  // Converteix un text de preu ("1.200", "160,50", "1200 €") en número
+  function num(v) {
+    if (v === null || v === undefined) return 0;
+    const s = String(v).replace(/[^\d,.-]/g, '').replace(/\.(?=\d{3}(\D|$))/g, '').replace(',', '.');
+    const n = parseFloat(s);
+    return isFinite(n) ? n : 0;
+  }
+
+  function eur(n) {
+    return new Intl.NumberFormat('ca-ES', { style: 'currency', currency: 'EUR', minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(n || 0);
+  }
+
   function nomFitxer(r) {
     const data = r.data || 'sense-data';
     const nom = (r.client || 'client').replace(/[^\p{L}\p{N}]+/gu, '-').toLowerCase();
@@ -29,6 +41,14 @@ const PdfServei = (function () {
     const blau = [10, 110, 138];
     const gris = [107, 119, 133];
     const negre = [29, 39, 51];
+
+    // Límit inferior d'escriptura (deixa lloc per al peu a 287).
+    const BOTTOM = 278;
+    // Si no caben "h" mm més, passa a una pàgina nova i reinicia y a dalt.
+    function salt(h) {
+      if (y + h > BOTTOM) { doc.addPage(); y = 20; return true; }
+      return false;
+    }
 
     // --- Capçalera ---
     doc.setFillColor(...blau);
@@ -63,6 +83,8 @@ const PdfServei = (function () {
     // Funció auxiliar per dibuixar una secció amb files etiqueta:valor
     function seccio(titol, files, opcions) {
       opcions = opcions || {};
+      // Manté divisòria + títol + 1a fila juntes (no deixa títol orfe al peu).
+      salt(24);
       y += 4;
       // títol secció
       doc.setDrawColor(...blau);
@@ -78,17 +100,19 @@ const PdfServei = (function () {
       files.forEach(([etq, val]) => {
         if (val === null || val === undefined || val === '') return;
         if (etq) {
+          const txt = doc.splitTextToSize(String(val), W - (marge + 45) - marge);
+          salt(7 * txt.length);
           doc.setFont('helvetica', 'bold');
           doc.setTextColor(...negre);
           doc.text(etq + ':', marge, y);
           doc.setFont('helvetica', 'normal');
-          const txt = doc.splitTextToSize(String(val), W - (marge + 45) - marge);
           doc.text(txt, marge + 45, y);
           y += 7 * txt.length;
         } else {
+          const txt = doc.splitTextToSize(String(val), W - 2 * marge);
+          salt(7 * txt.length);
           doc.setFont('helvetica', 'normal');
           doc.setTextColor(...negre);
-          const txt = doc.splitTextToSize(String(val), W - 2 * marge);
           doc.text(txt, marge, y);
           y += 7 * txt.length;
         }
@@ -110,6 +134,7 @@ const PdfServei = (function () {
     ]);
 
     // --- Catering (molt destacat) ---
+    salt(26); // títol + caixa SÍ/NO juntes
     y += 4;
     doc.setDrawColor(...blau);
     doc.line(marge, y, W - marge, y);
@@ -139,14 +164,17 @@ const PdfServei = (function () {
           if (qty) items.push(`${it.nom}  —  ${qty} ${qty === 1 ? g.unitat[0] : g.unitat[1]}`);
         });
       });
-      const extraPreu = parseFloat(String(r.cateringExtraPreu).replace(',', '.')) || 0;
-      if (r.cateringExtra || extraPreu > 0) {
-        items.push(`Extra: ${r.cateringExtra || '—'}${extraPreu > 0 ? '  —  ' + extraPreu + ' €' : ''}`);
+      // A cuina només els interessa QUÈ és l'extra i per a quantes persones,
+      // no el preu (el total surt a la secció PREU).
+      if (r.cateringExtra) {
+        const q = String(r.cateringExtraQty || '').trim();
+        items.push(`Extra: ${r.cateringExtra}${q ? `  —  ${q} ${q === '1' ? 'persona' : 'persones'}` : ''}`);
       }
       doc.setFontSize(12);
       doc.setFont('helvetica', 'normal');
       items.forEach(it => {
         const txt = doc.splitTextToSize('•  ' + it, W - 2 * marge);
+        salt(7 * txt.length);
         doc.text(txt, marge, y);
         y += 7 * txt.length;
       });
@@ -170,14 +198,53 @@ const PdfServei = (function () {
       doc.setFontSize(12);
       files.forEach(([etq, val]) => {
         if (val === null || val === undefined || val === '') return;
+        const txt = doc.splitTextToSize(String(val), W - (marge + 45) - marge);
+        salt(7 * txt.length);
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(...negre);
         doc.text(etq + ':', marge, y);
         doc.setFont('helvetica', 'normal');
-        const txt = doc.splitTextToSize(String(val), W - (marge + 45) - marge);
         doc.text(txt, marge + 45, y);
         y += 7 * txt.length;
       });
+    }
+
+    // --- Preu (total destacat) ---
+    const lloguer = (r.preuLloguer !== undefined && r.preuLloguer !== '') ? num(r.preuLloguer) : num(r.preu);
+    const extres = num(r.preuExtres);
+    const totalPreu = lloguer + extres;
+    if (totalPreu > 0) {
+      salt(48); // tota la secció de preu junta (títol + files + caixa total)
+      y += 4;
+      doc.setDrawColor(...blau);
+      doc.line(marge, y, W - marge, y);
+      y += 6;
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(11);
+      doc.setTextColor(...blau);
+      doc.text('PREU', marge, y);
+      y += 8;
+
+      doc.setFontSize(12);
+      [['Lloguer', lloguer], ['Extres', extres]].forEach(([etq, val]) => {
+        if (!val) return;
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(...negre);
+        doc.text(etq, marge, y);
+        doc.text(eur(val), W - marge, y, { align: 'right' });
+        y += 7;
+      });
+
+      // Caixa de total destacada
+      y += 1;
+      doc.setFillColor(231, 246, 238);
+      doc.roundedRect(marge, y - 5, W - 2 * marge, 11, 2, 2, 'F');
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(13);
+      doc.setTextColor(31, 158, 107);
+      doc.text('TOTAL', marge + 4, y + 2);
+      doc.text(eur(totalPreu), W - marge - 4, y + 2, { align: 'right' });
+      y += 14;
     }
 
     // --- Notes ---
