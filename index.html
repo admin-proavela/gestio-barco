@@ -83,7 +83,11 @@
       </div>
       <div class="camp">
         <label for="aj-patro">Patró per defecte</label>
-        <input type="text" id="aj-patro" placeholder="Ex: Joan">
+        <select id="aj-patro">
+          <option value="">—</option>
+          <option>Francesc</option>
+          <option>Vicente</option>
+        </select>
       </div>
       <div class="camp">
         <label for="aj-comissio">La teva comissió (%)</label>
@@ -165,13 +169,8 @@
           <div class="camp">
             <label for="r-durada">Durada</label>
             <select id="r-durada">
-              <option>Mig dia (matí)</option>
-              <option>Mig dia (tarda)</option>
               <option>Dia sencer</option>
-              <option>2 hores</option>
-              <option>3 hores</option>
               <option>4 hores</option>
-              <option>Altre</option>
             </select>
           </div>
           <div class="camp">
@@ -181,7 +180,11 @@
         </div>
         <div class="camp">
           <label for="r-patro">Patró</label>
-          <input type="text" id="r-patro">
+          <select id="r-patro">
+            <option value="">—</option>
+            <option>Francesc</option>
+            <option>Vicente</option>
+          </select>
         </div>
         <label class="check">
           <input type="checkbox" id="r-patro-ok"> Patró confirmat

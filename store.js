@@ -7,10 +7,10 @@ const CATERING_CARTA = [
   {
     grup: 'Paelles / arrossos', unitat: ['ració', 'racions'], extra: true,
     items: [
-      { clau: 'cateringD1', camp: 'r-cat-d1', nom: 'Paella vegetal', preu: 42 },
-      { clau: 'cateringD2', camp: 'r-cat-d2', nom: 'Paella de marisc', preu: 55 },
-      { clau: 'cateringD3', camp: 'r-cat-d3', nom: 'Paella mixta', preu: 60 },
-      { clau: 'cateringD4', camp: 'r-cat-d4', nom: 'Arròs cremós amb bogavant', preu: 67 },
+      { clau: 'cateringD1', camp: 'r-cat-d1', nom: 'Paella de verdures', preu: 37 },
+      { clau: 'cateringD2', camp: 'r-cat-d2', nom: 'Paella de marisc', preu: 47 },
+      { clau: 'cateringD3', camp: 'r-cat-d3', nom: 'Paella mixta (carn i marisc)', preu: 50 },
+      { clau: 'cateringD4', camp: 'r-cat-d4', nom: 'Arròs cremós amb marisc i bogavant', preu: 52 },
     ],
   },
   {
@@ -25,6 +25,12 @@ const CATERING_CARTA = [
     items: [
       { clau: 'cateringPPb', camp: 'r-cat-ppb', nom: 'Bàsic (patates, olives, fuet)', preu: 10 },
       { clau: 'cateringPPc', camp: 'r-cat-ppc', nom: 'Complet (+ amanida de pasta, entrepans i macedònia)', preu: 25 },
+    ],
+  },
+  {
+    grup: '🍽️ Packs', unitat: ['persona', 'persones'],
+    items: [
+      { clau: 'cateringPackC', camp: 'r-cat-packc', nom: 'Pack complet (menjar + begudes amb alcohol)', preu: 45 },
     ],
   },
 ];
@@ -46,7 +52,7 @@ const Store = (function () {
     {
       id: 'p-catering',
       titol: 'Oferir catering / dinar a bord',
-      text: 'Oferim catering a bord perquè no t\'hagis de preocupar de res durant la sortida 🍽️ T\'ho portem des del nostre restaurant amb una llanxa.\n\n🥘 Paelles i arrossos (per ració):\n• Paella vegetal — 42 €\n• Paella de marisc — 55 €\n• Paella mixta — 60 €\n• Arròs cremós amb bogavant — 67 €\n\n🥤 Begudes (a bord, lliure):\n• Amb alcohol (refrescos, vi i cervesa) — 25 €/persona\n• Sense alcohol (només refrescos) — 15 €/persona\n\n🫒 Pica-pica:\n• Bàsic (patates, olives, fuet) — 10 €/persona\n• Complet (+ amanida de pasta, entrepans i macedònia) — 25 €/persona\n\nDigues-me què voleu i per quantes persones, i si hi ha alguna al·lèrgia 😊'
+      text: 'Oferim catering a bord perquè no t\'hagis de preocupar de res durant la sortida 🍽️ T\'ho portem des del nostre restaurant amb una llanxa.\n\n🥘 Paelles i arrossos (per ració):\n• Paella de verdures — 37 €\n• Paella de marisc — 47 €\n• Paella mixta (carn i marisc) — 50 €\n• Arròs cremós amb marisc i bogavant — 52 €\n\n🥤 Begudes (a bord, lliure):\n• Amb alcohol (refrescos, vi i cervesa) — 25 €/persona\n• Sense alcohol (només refrescos) — 15 €/persona\n\n🫒 Pica-pica:\n• Bàsic (patates, olives, fuet) — 10 €/persona\n• Complet (+ amanida de pasta, entrepans i macedònia) — 25 €/persona\n\n🍽️ Packs:\n• Pack complet (menjar + begudes amb alcohol) — 45 €/persona\n\nDigues-me què voleu i per quantes persones, i si hi ha alguna al·lèrgia 😊'
     },
     {
       id: 'p-confirmacio',

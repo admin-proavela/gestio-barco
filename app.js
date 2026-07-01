@@ -164,7 +164,7 @@
     $('#r-plataforma').value = r ? (r.plataforma || 'ClickAndBoat') : 'ClickAndBoat';
     $('#r-data').value = r ? (r.data || '') : (calSeleccio || '');
     $('#r-hora').value = r ? (r.hora || '') : '';
-    $('#r-durada').value = r ? (r.durada || 'Mig dia (matí)') : 'Mig dia (matí)';
+    $('#r-durada').value = r ? (r.durada || 'Dia sencer') : 'Dia sencer';
     $('#r-persones').value = r ? (r.persones || '') : '';
     $('#r-patro').value = r ? (r.patro || '') : (Store.getSettings().patro || '');
     $('#r-patro-ok').checked = r ? !!r.patroOk : false;
