@@ -31,6 +31,7 @@ const CATERING_CARTA = [
     grup: '🍽️ Packs', unitat: ['persona', 'persones'],
     items: [
       { clau: 'cateringPackC', camp: 'r-cat-packc', nom: 'Pack complet (menjar + begudes amb alcohol)', preu: 45 },
+      { clau: 'cateringPackS', camp: 'r-cat-packs', nom: 'Pack complet (menjar + begudes sense alcohol)', preu: 40 },
     ],
   },
 ];
@@ -52,7 +53,7 @@ const Store = (function () {
     {
       id: 'p-catering',
       titol: 'Oferir catering / dinar a bord',
-      text: 'Oferim catering a bord perquè no t\'hagis de preocupar de res durant la sortida 🍽️ T\'ho portem des del nostre restaurant amb una llanxa.\n\n🥘 Paelles i arrossos (per ració):\n• Paella de verdures — 37 €\n• Paella de marisc — 47 €\n• Paella mixta (carn i marisc) — 50 €\n• Arròs cremós amb marisc i bogavant — 52 €\n\n🥤 Begudes (a bord, lliure):\n• Amb alcohol (refrescos, vi i cervesa) — 25 €/persona\n• Sense alcohol (només refrescos) — 15 €/persona\n\n🫒 Pica-pica:\n• Bàsic (patates, olives, fuet) — 10 €/persona\n• Complet (+ amanida de pasta, entrepans i macedònia) — 25 €/persona\n\n🍽️ Packs:\n• Pack complet (menjar + begudes amb alcohol) — 45 €/persona\n\nDigues-me què voleu i per quantes persones, i si hi ha alguna al·lèrgia 😊'
+      text: 'Oferim catering a bord perquè no t\'hagis de preocupar de res durant la sortida 🍽️ T\'ho portem des del nostre restaurant amb una llanxa.\n\n🥘 Paelles i arrossos (per ració):\n• Paella de verdures — 37 €\n• Paella de marisc — 47 €\n• Paella mixta (carn i marisc) — 50 €\n• Arròs cremós amb marisc i bogavant — 52 €\n\n🥤 Begudes (a bord, lliure):\n• Amb alcohol (refrescos, vi i cervesa) — 25 €/persona\n• Sense alcohol (només refrescos) — 15 €/persona\n\n🫒 Pica-pica:\n• Bàsic (patates, olives, fuet) — 10 €/persona\n• Complet (+ amanida de pasta, entrepans i macedònia) — 25 €/persona\n\n🍽️ Packs:\n• Pack complet (menjar + begudes amb alcohol) — 45 €/persona\n• Pack complet (menjar + begudes sense alcohol) — 40 €/persona\n\nDigues-me què voleu i per quantes persones, i si hi ha alguna al·lèrgia 😊'
     },
     {
       id: 'p-confirmacio',
