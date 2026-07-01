@@ -114,7 +114,7 @@
     const info = [];
     if (r.durada) info.push(r.durada);
     if (r.hora) info.push('🕐 ' + r.hora);
-    if (r.persones) info.push('👥 ' + r.persones);
+    if (r.persones || r.adults || r.nens) info.push('👥 ' + textPersones(r));
     if (r.telefon) info.push('📞 ' + r.telefon);
     if (r.patro) info.push((r.patroOk ? '✅ ' : '⏳ ') + r.patro);
     if (r.plataforma) info.push(r.plataforma);
@@ -166,6 +166,8 @@
     $('#r-hora').value = r ? (r.hora || '') : '';
     $('#r-durada').value = r ? (r.durada || 'Dia sencer') : 'Dia sencer';
     $('#r-persones').value = r ? (r.persones || '') : '';
+    $('#r-adults').value = r ? (r.adults || '') : '';
+    $('#r-nens').value = r ? (r.nens || '') : '';
     $('#r-patro').value = r ? (r.patro || '') : (Store.getSettings().patro || '');
     $('#r-patro-ok').checked = r ? !!r.patroOk : false;
     $('#r-cat').checked = r ? !!r.catering : false;
@@ -252,6 +254,15 @@
   // Delegació: qualsevol input dins dels grups de la carta recalcula el preu
   $('#cat-grups').addEventListener('input', () => actualitzaPreuCatering());
 
+  // Adults + Nens → omple automàticament el total de persones
+  function sumaPersones() {
+    const a = parseInt($('#r-adults').value) || 0;
+    const n = parseInt($('#r-nens').value) || 0;
+    if (a || n) $('#r-persones').value = a + n;
+  }
+  $('#r-adults').addEventListener('input', sumaPersones);
+  $('#r-nens').addEventListener('input', sumaPersones);
+
   $('#reserva-desa').addEventListener('click', () => {
     const nom = $('#r-nom').value.trim();
     const data = $('#r-data').value;
@@ -271,6 +282,8 @@
       hora: $('#r-hora').value,
       durada: $('#r-durada').value,
       persones: $('#r-persones').value,
+      adults: $('#r-adults').value,
+      nens: $('#r-nens').value,
       patro: $('#r-patro').value.trim(),
       patroOk: $('#r-patro-ok').checked,
       catering: $('#r-cat').checked,
@@ -353,13 +366,27 @@
     toast('PDF descarregat. Ja el pots enviar per WhatsApp 📲');
   }
 
+  // Text de persones amb desglossament d'adults/nens si n'hi ha
+  function textPersones(r) {
+    const total = r.persones || ((parseInt(r.adults) || 0) + (parseInt(r.nens) || 0)) || '';
+    const a = parseInt(r.adults) || 0;
+    const n = parseInt(r.nens) || 0;
+    if (a || n) {
+      const parts = [];
+      if (a) parts.push(a + (a === 1 ? ' adult' : ' adults'));
+      if (n) parts.push(n + (n === 1 ? ' nen' : ' nens'));
+      return total + ' (' + parts.join(', ') + ')';
+    }
+    return '' + total;
+  }
+
   function resumText(r, settings) {
     const L = [];
     L.push('*' + (settings.barco || 'Hotel Barcarola') + ' — Full de servei*');
     L.push('📅 ' + (r.data ? dataCurta(r.data) : '—') + (r.hora ? '  🕐 ' + r.hora : ''));
     if (r.durada) L.push('⏱️ ' + r.durada);
     L.push('👤 ' + (r.client || '') + (r.telefon ? '  📞 ' + r.telefon : ''));
-    if (r.persones) L.push('👥 ' + r.persones + ' persones');
+    if (r.persones || r.adults || r.nens) L.push('👥 ' + textPersones(r) + ' persones');
     if (r.patro) L.push('⚓ Patró: ' + r.patro + (r.patroOk ? ' (confirmat)' : ''));
     if (r.catering) {
       L.push('🍽️ MENJAR A BORD');

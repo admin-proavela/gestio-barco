@@ -12,6 +12,20 @@ const PdfServei = (function () {
     } catch (e) { return iso; }
   }
 
+  // Text de persones amb desglossament d'adults/nens si n'hi ha
+  function persones(r) {
+    const a = parseInt(r.adults) || 0;
+    const n = parseInt(r.nens) || 0;
+    const total = r.persones || (a + n) || '';
+    if (a || n) {
+      const parts = [];
+      if (a) parts.push(a + (a === 1 ? ' adult' : ' adults'));
+      if (n) parts.push(n + (n === 1 ? ' nen' : ' nens'));
+      return total + ' (' + parts.join(', ') + ')';
+    }
+    return total === '' ? '' : String(total);
+  }
+
   // Converteix un text de preu ("1.200", "160,50", "1200 €") en número
   function num(v) {
     if (v === null || v === undefined) return 0;
@@ -124,7 +138,7 @@ const PdfServei = (function () {
       ['Nom', r.client],
       ['Telèfon', r.telefon],
       ['Plataforma', r.plataforma],
-      ['Persones', r.persones]
+      ['Persones', persones(r)]
     ]);
 
     // --- Patró ---
