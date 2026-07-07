@@ -13,11 +13,13 @@ i generar el **full de servei en PDF** per enviar a la cuina i al patró per Wha
 
 | Pestanya | Per a què |
 |----------|-----------|
-| **Reserves** | Apunta cada reserva: client, telèfon, plataforma, dia, durada, persones, patró i catering. Botons per generar el **PDF** i **enviar-lo per WhatsApp**. |
+| **Reserves** | Apunta cada reserva: **barco**, client, telèfon, plataforma, dia, durada, persones, patró i catering. Botons per generar el **PDF** i **enviar-lo per WhatsApp**. |
 | **Calendari** | Veus d'un cop d'ull quins dies tens reserves (i si el patró està lliure). |
-| **Guanys** | La teva comissió **mes per mes** (per facturar): suma del lloguer + extres de cada mes i el teu % a sobre. Total de l'any a dalt. Les cancel·lades no compten. |
+| **Guanys** | La teva comissió **mes per mes i per barco** (filtre a dalt). Botó **📄 Factura al propietari**: genera la factura mensual de comissió en PDF (base + IVA 21%) llesta per enviar. Les cancel·lades no compten; a la factura només hi van les confirmades. |
 | **Plantilles** | Respostes ràpides per copiar i enganxar a ClickAndBoat / Samboat / WhatsApp (benvinguda, oferir catering, confirmació…). |
-| **Ajustos** | Nom del barco, restaurant, patró per defecte, **% de comissió** i **còpia de seguretat** de les dades. |
+| **Ajustos** | **Barcos** (cada un amb propietari, NIF i % de comissió propis), restaurant, patró per defecte, **dades de facturació** (surten a la factura) i **còpia de seguretat** de les dades. |
+
+> **Multi-barco:** les dades antigues es migren soles — el primer cop que obris l'app es crea el barco a partir dels ajustos i s'hi assignen totes les reserves existents.
 
 > A cada reserva poses el **preu del lloguer** i els **extres / catering** per separat; l'app calcula el teu % sobre el total (lloguer + extres).
 

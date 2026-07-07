@@ -51,6 +51,16 @@
     return c > 0 ? c : 10;
   }
 
+  // Comissió d'un barco concret (o la general per defecte)
+  function taxaBarco(barcoId) {
+    const b = barcoId ? Store.getBarco(barcoId) : null;
+    const c = b ? num(b.comissio) : 0;
+    return c > 0 ? c : taxaComissio();
+  }
+
+  // Comissió que toca a una reserva segons el seu barco
+  function taxaReserva(r) { return taxaBarco(r.barcoId); }
+
   function dataCurta(iso) {
     if (!iso) return '—';
     try {
@@ -112,6 +122,10 @@
     card.className = 'targeta ' + classeEstat(r);
 
     const info = [];
+    if (Store.getBarcos().length > 1) {
+      const b = Store.getBarco(r.barcoId);
+      if (b) info.push('🚤 ' + b.nom);
+    }
     if (r.durada) info.push(r.durada);
     if (r.hora) info.push('🕐 ' + r.hora);
     if (r.persones || r.adults || r.nens) info.push('👥 ' + textPersones(r));
@@ -155,10 +169,21 @@
   /* ---------- Reserves: formulari ---------- */
   const modal = $('#modal-reserva');
 
+  // Omple el desplegable de barcos del formulari
+  function renderSelectBarcos(seleccionat) {
+    const barcos = Store.getBarcos();
+    const sel = $('#r-barco');
+    sel.innerHTML = barcos.map(b => `<option value="${esc(b.id)}">${esc(b.nom)}</option>`).join('');
+    sel.value = seleccionat && barcos.some(b => b.id === seleccionat) ? seleccionat : (barcos[0] ? barcos[0].id : '');
+    // Amb un sol barco, no cal mostrar el camp
+    $('#camp-barco').hidden = barcos.length <= 1;
+  }
+
   function obreReserva(id) {
     const r = id ? Store.getReserva(id) : null;
     $('#reserva-titol').textContent = r ? 'Editar reserva' : 'Nova reserva';
     $('#r-id').value = r ? r.id : '';
+    renderSelectBarcos(r ? r.barcoId : null);
     $('#r-nom').value = r ? (r.client || '') : '';
     $('#r-tel').value = r ? (r.telefon || '') : '';
     $('#r-plataforma').value = r ? (r.plataforma || 'ClickAndBoat') : 'ClickAndBoat';
@@ -191,7 +216,7 @@
 
   function actualitzaGuanyHint() {
     const total = num($('#r-preu-lloguer').value) + num($('#r-preu-extres').value);
-    const taxa = taxaComissio();
+    const taxa = taxaBarco($('#r-barco').value);
     $('#r-guany-hint').textContent = total > 0
       ? `El teu ${taxa}% de ${eur(total)} = ${eur(total * taxa / 100)}`
       : '';
@@ -204,6 +229,7 @@
   $('#r-cat').addEventListener('change', e => { $('#cat-detalls').hidden = !e.target.checked; });
   $('#r-preu-lloguer').addEventListener('input', actualitzaGuanyHint);
   $('#r-preu-extres').addEventListener('input', actualitzaGuanyHint);
+  $('#r-barco').addEventListener('change', actualitzaGuanyHint);
 
   // Genera les files de la carta dins del formulari des de CATERING_CARTA
   function renderCateringCarta() {
@@ -275,6 +301,7 @@
     cateringItems().forEach(it => { cateringQty[it.clau] = parseInt($('#' + it.camp).value) || 0; });
     const r = Object.assign({}, existent, cateringQty, {
       id: id || undefined,
+      barcoId: $('#r-barco').value,
       client: nom,
       telefon: $('#r-tel').value.trim(),
       plataforma: $('#r-plataforma').value,
@@ -335,7 +362,7 @@
 
   /* ---------- PDF i WhatsApp ---------- */
   function descarregaPDF(r) {
-    const { blob, filename } = PdfServei.generar(r, Store.getSettings());
+    const { blob, filename } = PdfServei.generar(r, Store.getSettings(), Store.getBarco(r.barcoId));
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url; a.download = filename;
@@ -345,7 +372,7 @@
 
   async function comparteixWhatsApp(r) {
     const settings = Store.getSettings();
-    const { blob, filename } = PdfServei.generar(r, settings);
+    const { blob, filename } = PdfServei.generar(r, settings, Store.getBarco(r.barcoId));
     const file = new File([blob], filename, { type: 'application/pdf' });
 
     // Mòbil modern: compartir el PDF directament i triar WhatsApp + contacte
@@ -382,7 +409,8 @@
 
   function resumText(r, settings) {
     const L = [];
-    L.push('*' + (settings.barco || 'Hotel Barcarola') + ' — Full de servei*');
+    const b = Store.getBarco(r.barcoId);
+    L.push('*' + ((b && b.nom) || settings.barco || 'Barco') + ' — Full de servei*');
     L.push('📅 ' + (r.data ? dataCurta(r.data) : '—') + (r.hora ? '  🕐 ' + r.hora : ''));
     if (r.durada) L.push('⏱️ ' + r.durada);
     L.push('👤 ' + (r.client || '') + (r.telefon ? '  📞 ' + r.telefon : ''));
@@ -522,16 +550,31 @@
   $('#cal-prev').addEventListener('click', () => { calData.setMonth(calData.getMonth() - 1); renderCalendari(); });
   $('#cal-next').addEventListener('click', () => { calData.setMonth(calData.getMonth() + 1); renderCalendari(); });
 
-  /* ---------- Guanys (mes per mes) ---------- */
+  /* ---------- Guanys (mes per mes, per barco) ---------- */
+  let guanyBarco = 'tots';   // filtre de barco a la vista Guanys
+
+  function renderGuanyBarcos() {
+    const barcos = Store.getBarcos();
+    const cont = $('#guany-barcos');
+    if (barcos.length <= 1) { cont.innerHTML = ''; cont.hidden = true; return; }
+    cont.hidden = false;
+    if (guanyBarco !== 'tots' && !barcos.some(b => b.id === guanyBarco)) guanyBarco = 'tots';
+    cont.innerHTML = `<button class="chip ${guanyBarco === 'tots' ? 'active' : ''}" data-barco="tots">Tots</button>` +
+      barcos.map(b => `<button class="chip ${guanyBarco === b.id ? 'active' : ''}" data-barco="${esc(b.id)}">${esc(b.nom)}</button>`).join('');
+    cont.querySelectorAll('.chip').forEach(c => c.onclick = () => { guanyBarco = c.dataset.barco; renderGuanys(); });
+  }
+
   function renderGuanys() {
     $('#guany-any').textContent = String(guanyAny);
-    const taxa = taxaComissio();
+    renderGuanyBarcos();
+    const multiBarco = Store.getBarcos().length > 1;
     const cont = $('#guany-mesos');
     cont.innerHTML = '';
 
-    // Reserves de l'any, no cancel·lades i amb import
+    // Reserves de l'any, no cancel·lades i amb import (filtrades per barco si cal)
     const reserves = Store.getReserves().filter(r =>
-      r.estat !== 'cancellada' && r.data && r.data.slice(0, 4) === String(guanyAny) && importReserva(r) > 0);
+      r.estat !== 'cancellada' && r.data && r.data.slice(0, 4) === String(guanyAny) && importReserva(r) > 0 &&
+      (guanyBarco === 'tots' || r.barcoId === guanyBarco));
     $('#guany-buit').hidden = reserves.length > 0;
 
     // Agrupar per mes
@@ -546,22 +589,24 @@
 
     Object.keys(perMes).map(Number).sort((a, b) => a - b).forEach(mes => {
       const llista = perMes[mes].sort((a, b) => (a.data || '').localeCompare(b.data || ''));
-      let factConfMes = 0, factPendMes = 0;
+      let factConfMes = 0, factPendMes = 0, comConfMes = 0, comPendMes = 0;
       llista.forEach(r => {
-        if (r.estat === 'pendent') factPendMes += importReserva(r);
-        else factConfMes += importReserva(r);
+        const imp = importReserva(r);
+        const com = imp * taxaReserva(r) / 100;
+        if (r.estat === 'pendent') { factPendMes += imp; comPendMes += com; }
+        else { factConfMes += imp; comConfMes += com; }
       });
-      const comConfMes = factConfMes * taxa / 100;
-      const comPendMes = factPendMes * taxa / 100;
       totalFactConf += factConfMes; totalComConf += comConfMes;
       totalFactPend += factPendMes; totalComPend += comPendMes;
 
       const nomMes = capFirst(new Intl.DateTimeFormat('ca-ES', { month: 'long' }).format(new Date(guanyAny, mes, 1)));
       const files = llista.map(r => {
         const imp = importReserva(r);
+        const taxa = taxaReserva(r);
         const pend = r.estat === 'pendent';
+        const b = multiBarco ? Store.getBarco(r.barcoId) : null;
         return `<div class="mes-fila ${pend ? 'pendent' : ''}">
-          <span class="mf-nom">${esc(r.client || 'Sense nom')} · ${dataCurta(r.data)}${pend ? ' <span class="mf-chip">pendent</span>' : ''}</span>
+          <span class="mf-nom">${esc(r.client || 'Sense nom')} · ${dataCurta(r.data)}${b ? ' · 🚤 ' + esc(b.nom) : ''}${pend ? ' <span class="mf-chip">pendent</span>' : ''}</span>
           <span class="mf-dret">${eur(imp)} → <b>${eur(imp * taxa / 100)}</b></span>
         </div>`;
       }).join('');
@@ -584,18 +629,62 @@
           </div>
           <div class="mes-comissio-cont">${comissioTxt}</div>
         </div>
-        <div class="mes-llista">${files}</div>`;
+        <div class="mes-llista">${files}</div>
+        <button class="btn-secundari ample mes-factura" data-mes="${mes}">📄 Factura al propietari</button>`;
+      card.querySelector('.mes-factura').onclick = () => generaFactura(mes);
       cont.appendChild(card);
     });
 
+    const etqBarco = guanyBarco === 'tots' ? '' : ' · ' + (Store.getBarco(guanyBarco) || {}).nom;
     const subPend = totalComPend > 0
       ? `<div class="gr-pend">+ ${eur(totalComPend)} pendents de confirmar</div>`
       : '';
     $('#guany-resum').innerHTML = `
-      <div class="gr-etq">El teu ${taxa}% confirmat de ${guanyAny}</div>
+      <div class="gr-etq">La teva comissió confirmada de ${guanyAny}${esc(etqBarco)}</div>
       <div class="gr-total">${eur(totalComConf)}</div>
       <div class="gr-sub">de ${eur(totalFactConf)} facturats</div>
       ${subPend}`;
+  }
+
+  /* ---------- Factura mensual al propietari ---------- */
+  function generaFactura(mes) {
+    const barcos = Store.getBarcos();
+    let barco = null;
+    if (guanyBarco !== 'tots') {
+      barco = Store.getBarco(guanyBarco);
+    } else if (barcos.length === 1) {
+      barco = barcos[0];
+    } else {
+      toast('Tria un barco a dalt per generar la seva factura');
+      return;
+    }
+    if (!barco) return;
+
+    // Només reserves confirmades del barco i mes (les pendents no es facturen)
+    const mm = String(mes + 1).padStart(2, '0');
+    const prefix = guanyAny + '-' + mm;
+    const reserves = Store.getReserves().filter(r =>
+      r.barcoId === barco.id && r.estat === 'confirmada' &&
+      r.data && r.data.startsWith(prefix) && importReserva(r) > 0)
+      .sort((a, b) => (a.data || '').localeCompare(b.data || ''));
+
+    if (!reserves.length) {
+      toast('Cap reserva confirmada de ' + barco.nom + ' aquest mes');
+      return;
+    }
+
+    const { blob, filename } = PdfFactura.generar({
+      barco, mes, any: guanyAny, reserves,
+      settings: Store.getSettings(),
+      taxa: taxaBarco(barco.id),
+      importReserva
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+    toast('Factura descarregada 📄');
   }
 
   $('#guany-prev').addEventListener('click', () => { guanyAny--; renderGuanys(); });
@@ -648,24 +737,79 @@
   $('#btn-nova-plantilla').addEventListener('click', () => editaPlantilla(null));
 
   /* ---------- Ajustos ---------- */
+  function renderBarcos() {
+    const cont = $('#aj-barcos');
+    const barcos = Store.getBarcos();
+    cont.innerHTML = '';
+    barcos.forEach(b => {
+      const el = document.createElement('div');
+      el.className = 'plantilla';
+      const sub = [b.propietari ? 'Propietari: ' + b.propietari : 'Sense propietari',
+                   (num(b.comissio) > 0 ? num(b.comissio) : taxaComissio()) + '% comissió']
+                  .join(' · ');
+      el.innerHTML = `
+        <h4>🚤 ${esc(b.nom)}</h4>
+        <p>${esc(sub)}</p>
+        <div class="plantilla-accions">
+          <button data-act="edita">✏️ Editar</button>
+          <button data-act="elimina">🗑️ Eliminar</button>
+        </div>`;
+      el.querySelector('[data-act="edita"]').onclick = () => editaBarco(b);
+      el.querySelector('[data-act="elimina"]').onclick = () => {
+        if (!confirm('Segur que vols eliminar "' + b.nom + '"?')) return;
+        const ok = Store.deleteBarco(b.id);
+        if (!ok) { toast('No es pot eliminar: té reserves o és l\'únic barco'); return; }
+        renderBarcos();
+        toast('Barco eliminat');
+      };
+      cont.appendChild(el);
+    });
+  }
+
+  function editaBarco(b) {
+    const nom = prompt('Nom del barco:', b ? b.nom : '');
+    if (nom === null) return;
+    const propietari = prompt('Nom del propietari (surt a la factura):', b ? (b.propietari || '') : '');
+    if (propietari === null) return;
+    const nifProp = prompt('NIF del propietari (opcional):', b ? (b.nifProp || '') : '');
+    if (nifProp === null) return;
+    const comissio = prompt('% de comissió per aquest barco:', b ? (b.comissio || taxaComissio()) : taxaComissio());
+    if (comissio === null) return;
+    Store.saveBarco(Object.assign({}, b, {
+      nom: nom.trim() || 'Sense nom',
+      propietari: propietari.trim(),
+      nifProp: nifProp.trim(),
+      comissio: num(comissio) || taxaComissio()
+    }));
+    renderBarcos();
+    toast('Barco desat ✅');
+  }
+
+  $('#btn-nou-barco').addEventListener('click', () => editaBarco(null));
+
   function carregaAjustos() {
+    renderBarcos();
     const s = Store.getSettings();
-    $('#aj-barco').value = s.barco || '';
     $('#aj-restaurant').value = s.restaurant || '';
     $('#aj-patro').value = s.patro || '';
     $('#aj-comissio').value = s.comissio != null ? s.comissio : 10;
     $('#aj-tel-cuina').value = s.telCuina || '';
     $('#aj-tel-patro').value = s.telPatro || '';
+    $('#aj-fact-nom').value = s.factNom || '';
+    $('#aj-fact-nif').value = s.factNif || '';
+    $('#aj-fact-adreca').value = s.factAdreca || '';
   }
 
   $('#btn-desa-ajustos').addEventListener('click', () => {
     Store.saveSettings({
-      barco: $('#aj-barco').value.trim(),
       restaurant: $('#aj-restaurant').value.trim(),
       patro: $('#aj-patro').value.trim(),
       comissio: num($('#aj-comissio').value) || 10,
       telCuina: $('#aj-tel-cuina').value.trim(),
-      telPatro: $('#aj-tel-patro').value.trim()
+      telPatro: $('#aj-tel-patro').value.trim(),
+      factNom: $('#aj-fact-nom').value.trim(),
+      factNif: $('#aj-fact-nif').value.trim(),
+      factAdreca: $('#aj-fact-adreca').value.trim()
     });
     toast('Ajustos desats ✅');
   });

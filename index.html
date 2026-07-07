@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#0a6e8a">
   <title>Gestió Barco</title>
-  <link rel="stylesheet" href="styles.css?v=7">
+  <link rel="stylesheet" href="styles.css?v=8">
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icon.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -59,6 +59,7 @@
         <h2 id="guany-any">—</h2>
         <button id="guany-next" class="btn-icon">›</button>
       </div>
+      <div class="filtres" id="guany-barcos"></div>
       <div id="guany-resum" class="guany-resum"></div>
       <div id="guany-mesos"></div>
       <p id="guany-buit" class="buit" hidden>Encara no hi ha imports.<br>Posa el preu del lloguer a les reserves.</p>
@@ -73,10 +74,13 @@
 
     <!-- VISTA: AJUSTOS -->
     <section id="view-ajustos" class="view">
-      <div class="camp">
-        <label for="aj-barco">Nom del barco / empresa</label>
-        <input type="text" id="aj-barco" placeholder="Ex: Barco Maria">
-      </div>
+      <h3>Barcos</h3>
+      <p class="ajuda">Cada barco té el seu propietari i el seu % de comissió. Les reserves i els guanys es separen per barco.</p>
+      <div id="aj-barcos" class="llista"></div>
+      <button id="btn-nou-barco" class="btn-secundari ample">+ Afegir barco</button>
+
+      <hr>
+      <h3>Generals</h3>
       <div class="camp">
         <label for="aj-restaurant">Nom del restaurant</label>
         <input type="text" id="aj-restaurant" placeholder="Ex: Restaurant del port">
@@ -90,7 +94,7 @@
         </select>
       </div>
       <div class="camp">
-        <label for="aj-comissio">La teva comissió (%)</label>
+        <label for="aj-comissio">Comissió per defecte (%) — si el barco no en té una de pròpia</label>
         <input type="number" id="aj-comissio" inputmode="decimal" min="0" step="any" placeholder="10">
       </div>
       <div class="camp">
@@ -100,6 +104,20 @@
       <div class="camp">
         <label for="aj-tel-patro">Telèfon del patró (WhatsApp)</label>
         <input type="tel" id="aj-tel-patro" placeholder="Ex: 600445566">
+      </div>
+      <hr>
+      <h3>Dades de facturació (surten a la factura del propietari)</h3>
+      <div class="camp">
+        <label for="aj-fact-nom">Nom / raó social</label>
+        <input type="text" id="aj-fact-nom" placeholder="Ex: Proavela">
+      </div>
+      <div class="camp">
+        <label for="aj-fact-nif">NIF / CIF</label>
+        <input type="text" id="aj-fact-nif" placeholder="Ex: B12345678">
+      </div>
+      <div class="camp">
+        <label for="aj-fact-adreca">Adreça fiscal</label>
+        <input type="text" id="aj-fact-adreca" placeholder="Ex: Carrer, núm, CP, Platja d'Aro">
       </div>
       <button id="btn-desa-ajustos" class="btn-primari ample">Desa els ajustos</button>
 
@@ -154,6 +172,10 @@
         </div>
 
         <h3>Sortida</h3>
+        <div class="camp" id="camp-barco">
+          <label for="r-barco">Barco</label>
+          <select id="r-barco"></select>
+        </div>
         <div class="camp-fila">
           <div class="camp">
             <label for="r-data">Data *</label>
@@ -259,8 +281,8 @@
   <div id="toast" class="toast" hidden></div>
 
   <script src="vendor/jspdf.umd.min.js"></script>
-  <script src="store.js?v=8"></script>
-  <script src="pdf.js?v=11"></script>
-  <script src="app.js?v=9"></script>
+  <script src="store.js?v=9"></script>
+  <script src="pdf.js?v=12"></script>
+  <script src="app.js?v=10"></script>
 </body>
 </html>

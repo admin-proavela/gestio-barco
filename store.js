@@ -79,8 +79,14 @@ const Store = (function () {
       patro: '',
       telCuina: '',
       telPatro: '',
-      comissio: 10
+      comissio: 10,
+      // Dades de l'emissor per a les factures de comissió al propietari
+      factNom: 'Proavela',
+      factNif: '',
+      factAdreca: '',
+      factIva: 21
     },
+    barcos: [],
     reserves: [],
     plantilles: PLANTILLES_DEFECTE,
     bloquejats: []
@@ -92,17 +98,41 @@ const Store = (function () {
       if (!raw) return structuredClone(DEFECTE);
       const dades = JSON.parse(raw);
       // Completar camps que puguin faltar
-      return {
+      const res = {
         settings: Object.assign({}, DEFECTE.settings, dades.settings),
+        barcos: Array.isArray(dades.barcos) ? dades.barcos : [],
         reserves: Array.isArray(dades.reserves) ? dades.reserves : [],
         plantilles: Array.isArray(dades.plantilles) && dades.plantilles.length
           ? dades.plantilles : structuredClone(PLANTILLES_DEFECTE),
         bloquejats: Array.isArray(dades.bloquejats) ? dades.bloquejats : []
       };
+      migrar(res);
+      return res;
     } catch (e) {
       console.error('Error llegint dades', e);
       return structuredClone(DEFECTE);
     }
+  }
+
+  /* Migració: dades antigues d'un sol barco → llista de barcos.
+     Crea el primer barco a partir dels ajustos i hi assigna les reserves. */
+  function migrar(d) {
+    let canvis = false;
+    if (!d.barcos.length) {
+      d.barcos.push({
+        id: 'b-1',
+        nom: (d.settings.barco || 'El meu barco'),
+        propietari: '',
+        nifProp: '',
+        comissio: (typeof d.settings.comissio === 'number' && d.settings.comissio > 0) ? d.settings.comissio : 10
+      });
+      canvis = true;
+    }
+    const primerId = d.barcos[0].id;
+    d.reserves.forEach(r => {
+      if (!r.barcoId) { r.barcoId = primerId; canvis = true; }
+    });
+    if (canvis) escriure(d);
   }
 
   function escriure(dades) {
@@ -115,6 +145,28 @@ const Store = (function () {
     // --- Ajustos ---
     getSettings() { return Object.assign({}, dades.settings); },
     saveSettings(s) { dades.settings = Object.assign({}, dades.settings, s); escriure(dades); },
+
+    // --- Barcos ---
+    getBarcos() { return dades.barcos.slice(); },
+    getBarco(id) { return dades.barcos.find(b => b.id === id) || null; },
+    saveBarco(b) {
+      if (b.id) {
+        const i = dades.barcos.findIndex(x => x.id === b.id);
+        if (i >= 0) dades.barcos[i] = b; else dades.barcos.push(b);
+      } else {
+        b.id = 'b-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6);
+        dades.barcos.push(b);
+      }
+      escriure(dades);
+      return b;
+    },
+    deleteBarco(id) {
+      if (dades.barcos.length <= 1) return false; // sempre ha de quedar un barco
+      if (dades.reserves.some(r => r.barcoId === id)) return false; // té reserves
+      dades.barcos = dades.barcos.filter(b => b.id !== id);
+      escriure(dades);
+      return true;
+    },
 
     // --- Reserves ---
     getReserves() { return dades.reserves.slice(); },
@@ -175,10 +227,12 @@ const Store = (function () {
       const nou = JSON.parse(json);
       dades = {
         settings: Object.assign({}, DEFECTE.settings, nou.settings),
+        barcos: Array.isArray(nou.barcos) ? nou.barcos : [],
         reserves: Array.isArray(nou.reserves) ? nou.reserves : [],
         plantilles: Array.isArray(nou.plantilles) ? nou.plantilles : structuredClone(PLANTILLES_DEFECTE),
         bloquejats: Array.isArray(nou.bloquejats) ? nou.bloquejats : []
       };
+      migrar(dades);
       escriure(dades);
     }
   };
